@@ -1,1867 +1,790 @@
+import { useState, useEffect, useRef } from "react";
 
-<!DOCTYPE html>
-<html lang="en">
+const COLORS = {
+  bg: "#070B14",
+  surface: "#0D1421",
+  card: "#111827",
+  border: "#1E2D3D",
+  accent: "#00E5A0",
+  accentDim: "#00C87E",
+  accentGlow: "rgba(0,229,160,0.15)",
+  gold: "#F5A623",
+  blue: "#3B82F6",
+  purple: "#8B5CF6",
+  red: "#EF4444",
+  textPrimary: "#F0F6FF",
+  textSecondary: "#7A8FA6",
+  textMuted: "#3D5166",
+  whatsapp: "#25D366",
+};
 
-<head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="csrf-token" content="5lhqrvCwWzlSH32G68Utf0r4kD6HROgC6j4wziez">
-    <meta name="keywords" content="Assentro">
-    <meta name="description" content="Assentro">
-    <link rel="canonical" href="https://assentro.com" />
-    <link rel="shortcut icon" href="https://assentro.com/assets/global/images/HBgRdDyBGO4Si9O3onna.png" type="image/x-icon" />
-    <link rel="icon" href="https://assentro.com/assets/global/images/HBgRdDyBGO4Si9O3onna.png" type="image/x-icon" />
-    <link rel="stylesheet" href="https://assentro.com/assets/global/css/simple-notify.min.css" />
-        <link rel="stylesheet" type="text/css" href="https://assentro.com/assets/vendor/mckenziearts/laravel-notify/css/notify.css"/>    
-    <link rel="stylesheet" href="https://assentro.com/assets/frontend/theme_base/coin_orbit/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://assentro.com/assets/frontend/theme_base/coin_orbit/css/fontawesome-pro.css">
-    <link rel="stylesheet" href="https://assentro.com/assets/frontend/theme_base/coin_orbit/css/iconsax.css">
-    <link rel="stylesheet" href="https://assentro.com/assets/frontend/theme_base/coin_orbit/css/odometer-default.min.css">
-    <link rel="stylesheet" href="https://assentro.com/assets/frontend/theme_base/coin_orbit/css/swiper.min.css">
-    <link rel="stylesheet" href="https://assentro.com/assets/frontend/theme_base/coin_orbit/css/magnific-popup.css">
-    <link rel="stylesheet" href="https://assentro.com/assets/frontend/theme_base/coin_orbit/css/select2.css">
-    <link rel="stylesheet" href="https://assentro.com/assets/frontend/theme_base/coin_orbit/css/styles.css">
-    
-    <script src="//code.jivosite.com/widget/DNF0sjB4IV" async></script>
-    <link href="https://assentro.com/plugin/components/font-awesome/css/fontawesome.min.css" rel="stylesheet">
-    <link href="https://assentro.com/plugin/czm-chat-support.css" rel="stylesheet">
+const mockData = {
+  wallet: { balance: 284750.5, currency: "KES", change: +12.4 },
+  stats: [
+    { label: "Total Sent", value: "KES 1.2M", icon: "↑", color: COLORS.red, trend: "+8.2%" },
+    { label: "Total Received", value: "KES 1.8M", icon: "↓", color: COLORS.accent, trend: "+14.7%" },
+    { label: "Active Users", value: "12,847", icon: "◉", color: COLORS.blue, trend: "+22.1%" },
+    { label: "Merchants", value: "3,291", icon: "◈", color: COLORS.gold, trend: "+5.9%" },
+  ],
+  transactions: [
+    { id: "TXN-9821", user: "Alice Wanjiru", type: "RECEIVED", amount: 5000, method: "M-Pesa", time: "2 min ago", status: "completed", avatar: "AW" },
+    { id: "TXN-9820", user: "Brian Odhiambo", type: "SENT", amount: 12500, method: "Wallet", time: "8 min ago", status: "completed", avatar: "BO" },
+    { id: "TXN-9819", user: "Carol Njeri", type: "WITHDRAWAL", amount: 8000, method: "M-Pesa", time: "15 min ago", status: "pending", avatar: "CN" },
+    { id: "TXN-9818", user: "David Kamau", type: "PAYBILL", amount: 3200, method: "KCB", time: "23 min ago", status: "completed", avatar: "DK" },
+    { id: "TXN-9817", user: "Esther Akinyi", type: "SUBSCRIPTION", amount: 999, method: "Auto-Pay", time: "41 min ago", status: "completed", avatar: "EA" },
+    { id: "TXN-9816", user: "Felix Mwangi", type: "RECEIVED", amount: 25000, method: "Eversend", time: "1 hr ago", status: "completed", avatar: "FM" },
+    { id: "TXN-9815", user: "Grace Otieno", type: "WITHDRAWAL", amount: 15000, method: "M-Pesa", time: "2 hr ago", status: "failed", avatar: "GO" },
+  ],
+  chartData: [42, 68, 55, 89, 74, 96, 83, 112, 98, 134, 121, 156],
+  months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+  users: [
+    { name: "Alice Wanjiru", phone: "+254 712 345 678", balance: 45200, tier: "VIP", joined: "Jan 2024", txns: 284 },
+    { name: "Brian Odhiambo", phone: "+254 723 456 789", balance: 12800, tier: "Premium", joined: "Mar 2024", txns: 156 },
+    { name: "Carol Njeri", phone: "+254 734 567 890", balance: 8900, tier: "Standard", joined: "Feb 2024", txns: 89 },
+    { name: "David Kamau", phone: "+254 745 678 901", balance: 33500, tier: "Premium", joined: "Dec 2023", txns: 412 },
+    { name: "Esther Akinyi", phone: "+254 756 789 012", balance: 6200, tier: "Standard", joined: "Apr 2024", txns: 67 },
+  ],
+  chatMessages: [
+    { from: "user", text: "What's my current balance?", time: "10:32" },
+    { from: "bot", text: "💰 Your wallet balance is **KES 45,200.00**\n\n📈 You've received KES 8,400 this week\n📉 You've spent KES 3,200 this week\n\nReply with *menu* for more options.", time: "10:32" },
+    { from: "user", text: "Send 2000 to Brian", time: "10:33" },
+    { from: "bot", text: "🔐 Please enter your 4-digit PIN to confirm:\n\n*Transfer Details:*\n👤 To: Brian Odhiambo\n💵 Amount: KES 2,000\n💸 Fee: KES 10\n\nReply with your PIN to confirm.", time: "10:33" },
+    { from: "user", text: "1234", time: "10:33" },
+    { from: "bot", text: "✅ *Transfer Successful!*\n\nKES 2,000 sent to Brian Odhiambo\n🕐 Time: 10:33 AM\n🔖 Ref: TXN-9821\n\nNew balance: *KES 43,200.00*", time: "10:33" },
+  ],
+  aiInsights: [
+    { icon: "🎯", title: "Spending Alert", desc: "You've spent 78% of your food budget this month.", color: COLORS.gold },
+    { icon: "💡", title: "Smart Tip", desc: "Set up auto-savings of KES 500/day to hit your 30k goal.", color: COLORS.accent },
+    { icon: "📊", title: "Trend", desc: "Your income grew 23% vs last month. Great progress!", color: COLORS.blue },
+    { icon: "🔔", title: "Reminder", desc: "KPLC bill of KES 3,200 due in 3 days.", color: COLORS.purple },
+  ],
+};
 
-    <style>
-        //The Custom CSS will be added on the site head tag 
-.site-head-tag {
-	margin: 0;
-  	padding: 0;
+const navItems = [
+  { id: "dashboard", label: "Dashboard", icon: "⬡" },
+  { id: "wallet", label: "Wallets", icon: "◎" },
+  { id: "transactions", label: "Transactions", icon: "⇄" },
+  { id: "users", label: "Users", icon: "⊞" },
+  { id: "whatsapp", label: "WhatsApp Bot", icon: "◉" },
+  { id: "ai", label: "AI Assistant", icon: "✦" },
+  { id: "merchants", label: "Merchants", icon: "◈" },
+  { id: "analytics", label: "Analytics", icon: "∿" },
+  { id: "security", label: "Security", icon: "⊛" },
+  { id: "settings", label: "Settings", icon: "⊙" },
+];
+
+function AnimatedNumber({ value, prefix = "", decimals = 0 }) {
+  const [display, setDisplay] = useState(0);
+  useEffect(() => {
+    let start = 0;
+    const end = parseFloat(value);
+    const duration = 1200;
+    const step = (end / duration) * 16;
+    const timer = setInterval(() => {
+      start += step;
+      if (start >= end) { setDisplay(end); clearInterval(timer); }
+      else setDisplay(start);
+    }, 16);
+    return () => clearInterval(timer);
+  }, [value]);
+  return <span>{prefix}{display.toLocaleString("en-KE", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}</span>;
 }
-    </style>
 
-    <title>Assentro - Home
-</title>
-</head>
-<body>
-                    <!-- *** [START] REQUIRED DIV *** -->
-                	<div id="chat"></div>
-                	<!-- *** [END] REQUIRED DIV *** -->
-                
-                	<!-- *** [START] REQUIRED JS FILES *** -->
-                	<script src="https://assentro.com/plugin/components/jquery/jquery-1.9.0.min.js"></script>
-                    <script src="https://assentro.com/plugin/components/moment/moment.min.js"></script>
-                    <script src="https://assentro.com/plugin/components/moment/moment-timezone-with-data.min.js"></script>
-                    <script src="https://assentro.com/plugin/czm-chat-support.min.js"></script>
-                    <script>
-                    
-                    $('#chat').czmChatSupport({
-                    
-                    	/* Button Settings */
-                    	button: {
-                    		position: "left", /* left, right or false. "position:false" does not pin to the left or right */
-                    		style: 1, /* Button style. Number between 1 and 7 */
-                    		src: '<i class="fab fa-whatsapp"></i>', /* Image, Icon or SVG */
-                    		backgroundColor: "#10c379", /* Html color code */
-                    		effect: 1, /* Button effect. Number between 1 and 7 */
-                    		notificationNumber: "1", /* Custom text or false. To remove, (notificationNumber:false) */
-                    		speechBubble: "How can we help you?", /* To remove, (speechBubble:false) */
-                    		pulseEffect: true, /* To remove, (pulseEffect:false) */
-                    		text: { /* For Button style larger than 1 */
-                    			title: "Need help? Chat with us", /* Writing is required */
-                    			description: "Customer Support", /* To remove, (description:false) */
-                    			online: "I'm Online", /* To remove, (online:false) */
-                    			offline: "I will be back soon" /* To remove, (offline:false) */
-                    		},
-                    		link: {
-                    			desktop: "https://web.whatsapp.com/send?phone=254756570043&text= ", /* Writing is required */
-                    			mobile: "https://wa.me/254756570043/?text= " /* If it is hidden desktop link will be valid. To remove, (mobile:false) */
-                    		},
-                    		onlineDay: {
-                    			/* Change the day you are offline like this. (sunday:false) */
-                    			sunday: "00:00-23:59",
-                    			monday: "00:00-23:59",
-                    			tuesday: "00:00-23:59",
-                    			wednesday: "00:00-23:59",
-                    			thursday: "00:00-23:59",
-                    			friday: "00:00-23:59",
-                    			saturday: "00:00-23:59"
-                    		}
-                    	},
-                    
-                    	/* Other Settings */
-                    	sound: true, /* true (default sound), false or custom sound. Custom sound example, (sound:'assets/sound/notification.mp3') */
-                    	changeBrowserTitle: "New Message!", /* Custom text or false. To remove, (changeBrowserTitle:false) */
-                    	cookie: false, /* It does not show the speech bubble, notification number, pulse effect and automatic open popup again for the specified time. For example, do not show for 1 hour, (cookie:1) or to remove, (cookie:false) */
-                    });
-                    
-                    </script>
-                	<!-- *** [END] REQUIRED JS FILES *** -->
-    <div class="body-overlay-bg"></div>
-    <script>
-    var notify = {
-        timeout: "5000",
-    }
-</script>
+function MiniChart({ data }) {
+  const max = Math.max(...data);
+  const w = 280, h = 80, pad = 4;
+  const pts = data.map((v, i) => {
+    const x = pad + (i / (data.length - 1)) * (w - pad * 2);
+    const y = h - pad - ((v / max) * (h - pad * 2));
+    return `${x},${y}`;
+  }).join(" ");
+  const area = `M${pad},${h} ` + data.map((v, i) => {
+    const x = pad + (i / (data.length - 1)) * (w - pad * 2);
+    const y = h - pad - ((v / max) * (h - pad * 2));
+    return `L${x},${y}`;
+  }).join(" ") + ` L${w - pad},${h} Z`;
 
-    <!--Header Area-->
-    <!--[if lte IE 9]>
-<p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience and security.</p>
-<![endif]-->
-
-<!-- Pre loader start -->
-<div class="preloader">
-    <div class="spinner"></div>
-</div>
-<!-- Pre loader start -->
-
-<!-- Back to top start -->
-<div class="back-to-top-wrap">
-    <svg class="backtotop-circle svg-content" width="100%" height="100%" viewBox="-1 -1 102 102">
-        <path d="M50,1 a49,49 0 0,1 0,98 a49,49 0 0,1 0,-98" />
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ overflow: "visible" }}>
+      <defs>
+        <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={COLORS.accent} stopOpacity="0.3" />
+          <stop offset="100%" stopColor={COLORS.accent} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={area} fill="url(#chartGrad)" />
+      <polyline points={pts} fill="none" stroke={COLORS.accent} strokeWidth="2" strokeLinejoin="round" />
+      {data.map((v, i) => {
+        const x = pad + (i / (data.length - 1)) * (w - pad * 2);
+        const y = h - pad - ((v / max) * (h - pad * 2));
+        return i === data.length - 1 ? (
+          <circle key={i} cx={x} cy={y} r={4} fill={COLORS.accent} />
+        ) : null;
+      })}
     </svg>
-</div>
-<!-- Back to top end -->
+  );
+}
 
+function BarChart({ data, labels }) {
+  const max = Math.max(...data);
+  return (
+    <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 120, padding: "0 4px" }}>
+      {data.map((v, i) => (
+        <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+          <div style={{
+            width: "100%", background: `linear-gradient(180deg, ${COLORS.accent}, ${COLORS.accentDim})`,
+            height: `${(v / max) * 100}%`, borderRadius: "3px 3px 0 0",
+            opacity: i === data.length - 1 ? 1 : 0.4,
+            transition: "height 1s ease",
+          }} />
+          <span style={{ fontSize: 9, color: COLORS.textMuted, fontFamily: "monospace" }}>{labels[i]}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
-<!-- Offcanvas area start -->
-<div class="fix">
-    <div class="offcanvas-area">
-        <div class="offcanvas-wrapper">
-            <div class="offcanvas-content">
-                <div class="offcanvas-top d-flex justify-content-between align-items-center">
-                    <div class="offcanvas-logo">
-                        <a href="https://assentro.com">
-                            <img src="https://assentro.com/assets/global/images/UFX7xJo83RdsgSq13daQ.png" alt="logo not found">
-                        </a>
-                    </div>
-                    <div class="offcanvas-close">
-                        <button class="offcanvas-close-icon">
-                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M11 1L1 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-                                <path d="M1 1L11 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                <div class="td-offcanvas-menu d-lg-none">
-                    <nav></nav>
-                </div>
-                <div class="offcanvas-content">
-                    <div class="offcanvas-btns d-flex flex-wrap gap-2">
-                        <a class="td-btn btn-fill-border btn-sm radius-8" href="https://assentro.com/login">
-                        <span class="btn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                           <path d="M9.107 5.448C9.705 3.698 12.123 3.645 12.832 5.289L12.892 5.449L13.699 7.809C14.0732 8.90406 14.9033 9.7834 15.975 10.22L16.192 10.301L18.552 11.107C20.302 11.705 20.355 14.123 18.712 14.832L18.552 14.892L16.192 15.699C15.0966 16.0729 14.2168 16.9031 13.78 17.975L13.699 18.191L12.893 20.552C12.295 22.302 9.877 22.355 9.169 20.712L9.107 20.552L8.301 18.192C7.92706 17.0966 7.09692 16.2168 6.025 15.78L5.809 15.699L3.449 14.893C1.698 14.295 1.645 11.877 3.289 11.169L3.449 11.107L5.809 10.301C6.90406 9.92681 7.7834 9.09671 8.22 8.025L8.301 7.809M11 6.094L10.194 8.454C9.62401 10.1245 8.34742 11.4592 6.704 12.103L6.454 12.194L4.094 13L6.454 13.806C8.12445 14.376 9.4592 15.6526 10.103 17.296L10.194 17.546L11 19.906L11.806 17.546C12.376 15.8755 13.6526 14.5408 15.296 13.897L15.546 13.807L17.906 13L15.546 12.194C13.8755 11.624 12.5408 10.3474 11.897 8.704L11.807 8.454M19 2C19.3817 2 19.7301 2.21726 19.898 2.56L19.946 2.677L20.296 3.703L21.323 4.053C21.7064 4.18326 21.9734 4.5319 21.9993 4.93602C22.0251 5.34014 21.8047 5.71995 21.441 5.898L21.323 5.946L20.297 6.296L19.947 7.323C19.8165 7.70631 19.4677 7.9731 19.0636 7.99872C18.6595 8.02435 18.2799 7.80376 18.102 7.44L18.054 7.323L17.704 6.297L16.677 5.947C16.2936 5.81674 16.0266 5.4681 16.0007 5.06398C15.9749 4.65986 16.1953 4.28005 16.559 4.102L16.677 4.054L17.703 3.704L18.053 2.677C18.1912 2.27192 18.572 1.99974 19 2Z" fill="white"/>
-                           </svg>
-                        </span>
-                            <span class="btn-text"></span>
-                        </a>
-                        <a class="td-btn gradient-btn btn-sm radius-8" href="https://assentro.com/register">
-                        <span class="btn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                           <path d="M9.107 5.448C9.705 3.698 12.123 3.645 12.832 5.289L12.892 5.449L13.699 7.809C14.0732 8.90406 14.9033 9.7834 15.975 10.22L16.192 10.301L18.552 11.107C20.302 11.705 20.355 14.123 18.712 14.832L18.552 14.892L16.192 15.699C15.0966 16.0729 14.2168 16.9031 13.78 17.975L13.699 18.191L12.893 20.552C12.295 22.302 9.877 22.355 9.169 20.712L9.107 20.552L8.301 18.192C7.92706 17.0966 7.09692 16.2168 6.025 15.78L5.809 15.699L3.449 14.893C1.698 14.295 1.645 11.877 3.289 11.169L3.449 11.107L5.809 10.301C6.90406 9.92681 7.7834 9.09671 8.22 8.025L8.301 7.809M11 6.094L10.194 8.454C9.62401 10.1245 8.34742 11.4592 6.704 12.103L6.454 12.194L4.094 13L6.454 13.806C8.12445 14.376 9.4592 15.6526 10.103 17.296L10.194 17.546L11 19.906L11.806 17.546C12.376 15.8755 13.6526 14.5408 15.296 13.897L15.546 13.807L17.906 13L15.546 12.194C13.8755 11.624 12.5408 10.3474 11.897 8.704L11.807 8.454M19 2C19.3817 2 19.7301 2.21726 19.898 2.56L19.946 2.677L20.296 3.703L21.323 4.053C21.7064 4.18326 21.9734 4.5319 21.9993 4.93602C22.0251 5.34014 21.8047 5.71995 21.441 5.898L21.323 5.946L20.297 6.296L19.947 7.323C19.8165 7.70631 19.4677 7.9731 19.0636 7.99872C18.6595 8.02435 18.2799 7.80376 18.102 7.44L18.054 7.323L17.704 6.297L16.677 5.947C16.2936 5.81674 16.0266 5.4681 16.0007 5.06398C15.9749 4.65986 16.1953 4.28005 16.559 4.102L16.677 4.054L17.703 3.704L18.053 2.677C18.1912 2.27192 18.572 1.99974 19 2Z" fill="white"/>
-                           </svg>
-                        </span>
-                            <span class="btn-text">Register</span>
-                        </a>
-                    </div>
-                </div>
+function StatusBadge({ status }) {
+  const cfg = {
+    completed: { bg: "rgba(0,229,160,0.1)", color: COLORS.accent, label: "Completed" },
+    pending: { bg: "rgba(245,166,35,0.1)", color: COLORS.gold, label: "Pending" },
+    failed: { bg: "rgba(239,68,68,0.1)", color: COLORS.red, label: "Failed" },
+  };
+  const c = cfg[status] || cfg.pending;
+  return (
+    <span style={{ background: c.bg, color: c.color, padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 600, letterSpacing: "0.05em" }}>
+      {c.label}
+    </span>
+  );
+}
+
+function TierBadge({ tier }) {
+  const cfg = {
+    VIP: { bg: "rgba(245,166,35,0.15)", color: COLORS.gold },
+    Premium: { bg: "rgba(139,92,246,0.15)", color: COLORS.purple },
+    Standard: { bg: "rgba(122,143,166,0.1)", color: COLORS.textSecondary },
+  };
+  const c = cfg[tier] || cfg.Standard;
+  return (
+    <span style={{ background: c.bg, color: c.color, padding: "2px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700 }}>{tier}</span>
+  );
+}
+
+function TypeBadge({ type }) {
+  const cfg = {
+    RECEIVED: { color: COLORS.accent, symbol: "↓" },
+    SENT: { color: COLORS.red, symbol: "↑" },
+    WITHDRAWAL: { color: COLORS.gold, symbol: "⇣" },
+    PAYBILL: { color: COLORS.blue, symbol: "≡" },
+    SUBSCRIPTION: { color: COLORS.purple, symbol: "↻" },
+  };
+  const c = cfg[type] || { color: COLORS.textSecondary, symbol: "·" };
+  return (
+    <span style={{ color: c.color, fontWeight: 700, fontSize: 12, display: "flex", alignItems: "center", gap: 4 }}>
+      <span style={{ fontSize: 14 }}>{c.symbol}</span>{type}
+    </span>
+  );
+}
+
+function Avatar({ initials, size = 36 }) {
+  const colors = [COLORS.accent, COLORS.blue, COLORS.purple, COLORS.gold, "#EC4899"];
+  const color = colors[initials.charCodeAt(0) % colors.length];
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: "50%", background: `${color}22`,
+      border: `1px solid ${color}44`, display: "flex", alignItems: "center",
+      justifyContent: "center", fontSize: size * 0.33, fontWeight: 700, color, flexShrink: 0,
+    }}>{initials}</div>
+  );
+}
+
+// ──────────────── VIEWS ────────────────
+
+function DashboardView() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      {/* Wallet Hero */}
+      <div style={{
+        background: `linear-gradient(135deg, ${COLORS.card} 0%, #0A1628 100%)`,
+        border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 28,
+        position: "relative", overflow: "hidden",
+      }}>
+        <div style={{
+          position: "absolute", top: -60, right: -60, width: 200, height: 200,
+          background: `radial-gradient(circle, ${COLORS.accentGlow} 0%, transparent 70%)`,
+          pointerEvents: "none",
+        }} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
+          <div>
+            <div style={{ color: COLORS.textSecondary, fontSize: 13, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
+              Platform Wallet Balance
             </div>
-        </div>
-    </div>
-</div>
-<div class="offcanvas-overlay"></div>
-<!-- Offcanvas area start -->
-
-<!-- Header section start -->
-<header>
-    <div class="header-area header-style-one header-transparent" id="header-sticky">
-        <div class="container-fluid p-0">
-            <div class="header-inner">
-                <div class="header-left">
-                    <div class="header-logo">
-                        <a href="https://assentro.com">
-                           <img src="https://assentro.com/assets/global/images/UFX7xJo83RdsgSq13daQ.png" alt="logo not found">
-                        </a>
-                    </div>
-                    <div class="header-menu d-none d-lg-inline-flex">
-                        <div class="td-main-menu">
-                            <nav class="td-mobile-menu-active">
-                                <ul>
-                                                                                                                    <li class=" active ">
-                                            <a href="https://assentro.com">Home</a>
-                                        </li>
-                                                                                                                                                            <li class="">
-                                            <a href="https://assentro.com/schema">Investment Plans</a>
-                                        </li>
-                                                                                                                                                            <li class="">
-                                            <a href="https://assentro.com/how-it-works">How It Works</a>
-                                        </li>
-                                                                                                                                                            <li class="">
-                                            <a href="https://assentro.com/about-us">About</a>
-                                        </li>
-                                                                                                                                                            <li class="">
-                                            <a href="https://assentro.com/blog">Blog</a>
-                                        </li>
-                                                                                                                                                            <li class="">
-                                            <a href="https://assentro.com/contact">Contact</a>
-                                        </li>
-                                                                                                            </ul>
-                            </nav>
-                        </div>
-                    </div>
-                </div>
-                <div class="header-right">
-                    <div class="header-quick-actions">
-                        <!--<div class="language-dropdown">-->
-                        <!--    <div class="language-box language-nav">-->
-                        <!--        <div class="translate_wrapper">-->
-                        <!--            <div class="current_lang">-->
-                        <!--                <div class="lang"><span class="lang-txt">English</span><svg width="9" height="6" viewBox="0 0 9 6" fill="none" xmlns="http://www.w3.org/2000/svg">-->
-                        <!--                        <path d="M8 1.5L4.5 4.5L1 1.5" stroke="#171717" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>-->
-                        <!--                    </svg>-->
-                        <!--                </div>-->
-                        <!--            </div>-->
-                        <!--            <div class="more_lang">-->
-                        <!--                -->
-                        <!--                    <a href="https://assentro.com/language-update?name=en" class="lang selected" data-value="en">-->
-                        <!--                        <span class="lang-txt">English</span>-->
-                        <!--                        -->
-                        <!--                            <span class="icon"><i class="fa-regular fa-check"></i></span>-->
-                        <!--                        -->
-                        <!--                    </a>-->
-                        <!--                -->
-                        <!--            </div>-->
-                        <!--        </div>-->
-                        <!--    </div>-->
-                        <!--</div>-->
-                        <div class="header-btns-wrap d-none d-sm-inline-flex">
-                                                        <a class="td-btn btn-fill-border btn-sm radius-8" href="https://assentro.com/login">
-                           <span class="btn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M9.107 5.448C9.705 3.698 12.123 3.645 12.832 5.289L12.892 5.449L13.699 7.809C14.0732 8.90406 14.9033 9.7834 15.975 10.22L16.192 10.301L18.552 11.107C20.302 11.705 20.355 14.123 18.712 14.832L18.552 14.892L16.192 15.699C15.0966 16.0729 14.2168 16.9031 13.78 17.975L13.699 18.191L12.893 20.552C12.295 22.302 9.877 22.355 9.169 20.712L9.107 20.552L8.301 18.192C7.92706 17.0966 7.09692 16.2168 6.025 15.78L5.809 15.699L3.449 14.893C1.698 14.295 1.645 11.877 3.289 11.169L3.449 11.107L5.809 10.301C6.90406 9.92681 7.7834 9.09671 8.22 8.025L8.301 7.809M11 6.094L10.194 8.454C9.62401 10.1245 8.34742 11.4592 6.704 12.103L6.454 12.194L4.094 13L6.454 13.806C8.12445 14.376 9.4592 15.6526 10.103 17.296L10.194 17.546L11 19.906L11.806 17.546C12.376 15.8755 13.6526 14.5408 15.296 13.897L15.546 13.807L17.906 13L15.546 12.194C13.8755 11.624 12.5408 10.3474 11.897 8.704L11.807 8.454M19 2C19.3817 2 19.7301 2.21726 19.898 2.56L19.946 2.677L20.296 3.703L21.323 4.053C21.7064 4.18326 21.9734 4.5319 21.9993 4.93602C22.0251 5.34014 21.8047 5.71995 21.441 5.898L21.323 5.946L20.297 6.296L19.947 7.323C19.8165 7.70631 19.4677 7.9731 19.0636 7.99872C18.6595 8.02435 18.2799 7.80376 18.102 7.44L18.054 7.323L17.704 6.297L16.677 5.947C16.2936 5.81674 16.0266 5.4681 16.0007 5.06398C15.9749 4.65986 16.1953 4.28005 16.559 4.102L16.677 4.054L17.703 3.704L18.053 2.677C18.1912 2.27192 18.572 1.99974 19 2Z" fill="white"/>
-                              </svg>
-                           </span>
-                                <span class="btn-text">Login</span>
-                            </a>
-                            <a class="td-btn gradient-btn btn-sm radius-8" href="https://assentro.com/register">
-                           <span class="btn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M9.107 5.448C9.705 3.698 12.123 3.645 12.832 5.289L12.892 5.449L13.699 7.809C14.0732 8.90406 14.9033 9.7834 15.975 10.22L16.192 10.301L18.552 11.107C20.302 11.705 20.355 14.123 18.712 14.832L18.552 14.892L16.192 15.699C15.0966 16.0729 14.2168 16.9031 13.78 17.975L13.699 18.191L12.893 20.552C12.295 22.302 9.877 22.355 9.169 20.712L9.107 20.552L8.301 18.192C7.92706 17.0966 7.09692 16.2168 6.025 15.78L5.809 15.699L3.449 14.893C1.698 14.295 1.645 11.877 3.289 11.169L3.449 11.107L5.809 10.301C6.90406 9.92681 7.7834 9.09671 8.22 8.025L8.301 7.809M11 6.094L10.194 8.454C9.62401 10.1245 8.34742 11.4592 6.704 12.103L6.454 12.194L4.094 13L6.454 13.806C8.12445 14.376 9.4592 15.6526 10.103 17.296L10.194 17.546L11 19.906L11.806 17.546C12.376 15.8755 13.6526 14.5408 15.296 13.897L15.546 13.807L17.906 13L15.546 12.194C13.8755 11.624 12.5408 10.3474 11.897 8.704L11.807 8.454M19 2C19.3817 2 19.7301 2.21726 19.898 2.56L19.946 2.677L20.296 3.703L21.323 4.053C21.7064 4.18326 21.9734 4.5319 21.9993 4.93602C22.0251 5.34014 21.8047 5.71995 21.441 5.898L21.323 5.946L20.297 6.296L19.947 7.323C19.8165 7.70631 19.4677 7.9731 19.0636 7.99872C18.6595 8.02435 18.2799 7.80376 18.102 7.44L18.054 7.323L17.704 6.297L16.677 5.947C16.2936 5.81674 16.0266 5.4681 16.0007 5.06398C15.9749 4.65986 16.1953 4.28005 16.559 4.102L16.677 4.054L17.703 3.704L18.053 2.677C18.1912 2.27192 18.572 1.99974 19 2Z" fill="white"/>
-                              </svg>
-                           </span>
-                                <span class="btn-text">Register</span>
-                            </a>
-                                                        </div>
-                        <div class="header-hamburger d-lg-none">
-                            <a class="sidebar-toggle" href="javascript:void(0)">
-                           <span class="menu-icon">
-                              <span></span>
-                              <span></span>
-                              <span></span>
-                           </span>
-                            </a>
-                        </div>
-                    </div>
-                </div>
+            <div style={{ fontSize: 42, fontWeight: 800, color: COLORS.textPrimary, letterSpacing: "-1px", fontFamily: "'Courier New', monospace" }}>
+              KES <AnimatedNumber value={mockData.wallet.balance} decimals={2} />
             </div>
-        </div>
-    </div>
-</header>
-<!-- Header section end -->
-
-    <!--/Header Area End-->
-
-    <div id="smooth-wrapper">
-        <div id="smooth-content">
-            <div class="body-wrapper">
-                <!-- Body main wrapper start -->
-                <main>
-                    
-                    <div class="td-banner-area banner-style-one p-relative z-index-11 fix" style="position: relative; overflow: hidden;">
-    <div class="container">
-        <div class="row">
-            <div class="col-xxl-6 col-xl-6 col-lg-6 col-md-7">
-                <div class="banner-content">
-                    <h1 class="banner-title has_text_move_anim"  data-delay="0.5" data-fade-from="left">Invest Globally in Crypto, Real Estate, Farming &amp; Energy</h1>
-                    <p class="description has_fade_anim" data-delay="0.9">Step into a smarter way to grow your wealth. Assentro connects you to powerful, diverse investment opportunities across top-performing industries, all in one secure platform. Whether you&#039;re just starting or scaling up, your financial journey begins here.</p>
-                    <div class="banner-buttons btn-wrap has_fade_anim" data-delay="1.2">
-                        
-                        <a class="td-btn gradient-btn radius-8" href="https://assentro.com/register">
-                             <span class="btn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M9.107 5.448C9.705 3.698 12.123 3.645 12.832 5.289L12.892 5.449L13.699 7.809C14.0732 8.90406 14.9033 9.7834 15.975 10.22L16.192 10.301L18.552 11.107C20.302 11.705 20.355 14.123 18.712 14.832L18.552 14.892L16.192 15.699C15.0966 16.0729 14.2168 16.9031 13.78 17.975L13.699 18.191L12.893 20.552C12.295 22.302 9.877 22.355 9.169 20.712L9.107 20.552L8.301 18.192C7.92706 17.0966 7.09692 16.2168 6.025 15.78L5.809 15.699L3.449 14.893C1.698 14.295 1.645 11.877 3.289 11.169L3.449 11.107L5.809 10.301C6.90406 9.92681 7.7834 9.09671 8.22 8.025L8.301 7.809M11 6.094L10.194 8.454C9.62401 10.1245 8.34742 11.4592 6.704 12.103L6.454 12.194L4.094 13L6.454 13.806C8.12445 14.376 9.4592 15.6526 10.103 17.296L10.194 17.546L11 19.906L11.806 17.546C12.376 15.8755 13.6526 14.5408 15.296 13.897L15.546 13.807L17.906 13L15.546 12.194C13.8755 11.624 12.5408 10.3474 11.897 8.704L11.807 8.454M19 2C19.3817 2 19.7301 2.21726 19.898 2.56L19.946 2.677L20.296 3.703L21.323 4.053C21.7064 4.18326 21.9734 4.5319 21.9993 4.93602C22.0251 5.34014 21.8047 5.71995 21.441 5.898L21.323 5.946L20.297 6.296L19.947 7.323C19.8165 7.70631 19.4677 7.9731 19.0636 7.99872C18.6595 8.02435 18.2799 7.80376 18.102 7.44L18.054 7.323L17.704 6.297L16.677 5.947C16.2936 5.81674 16.0266 5.4681 16.0007 5.06398C15.9749 4.65986 16.1953 4.28005 16.559 4.102L16.677 4.054L17.703 3.704L18.053 2.677C18.1912 2.27192 18.572 1.99974 19 2Z" fill="white"/>
-                                </svg>
-                             </span>
-                            <span class="btn-text">Get Started Today</span>
-                        </a>
-                        <a class="td-btn btn-fill-border radius-8" href="https://assentro.com/how-it-works">
-                            <span class="btn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M9.107 5.448C9.705 3.698 12.123 3.645 12.832 5.289L12.892 5.449L13.699 7.809C14.0732 8.90406 14.9033 9.7834 15.975 10.22L16.192 10.301L18.552 11.107C20.302 11.705 20.355 14.123 18.712 14.832L18.552 14.892L16.192 15.699C15.0966 16.0729 14.2168 16.9031 13.78 17.975L13.699 18.191L12.893 20.552C12.295 22.302 9.877 22.355 9.169 20.712L9.107 20.552L8.301 18.192C7.92706 17.0966 7.09692 16.2168 6.025 15.78L5.809 15.699L3.449 14.893C1.698 14.295 1.645 11.877 3.289 11.169L3.449 11.107L5.809 10.301C6.90406 9.92681 7.7834 9.09671 8.22 8.025L8.301 7.809M11 6.094L10.194 8.454C9.62401 10.1245 8.34742 11.4592 6.704 12.103L6.454 12.194L4.094 13L6.454 13.806C8.12445 14.376 9.4592 15.6526 10.103 17.296L10.194 17.546L11 19.906L11.806 17.546C12.376 15.8755 13.6526 14.5408 15.296 13.897L15.546 13.807L17.906 13L15.546 12.194C13.8755 11.624 12.5408 10.3474 11.897 8.704L11.807 8.454M19 2C19.3817 2 19.7301 2.21726 19.898 2.56L19.946 2.677L20.296 3.703L21.323 4.053C21.7064 4.18326 21.9734 4.5319 21.9993 4.93602C22.0251 5.34014 21.8047 5.71995 21.441 5.898L21.323 5.946L20.297 6.296L19.947 7.323C19.8165 7.70631 19.4677 7.9731 19.0636 7.99872C18.6595 8.02435 18.2799 7.80376 18.102 7.44L18.054 7.323L17.704 6.297L16.677 5.947C16.2936 5.81674 16.0266 5.4681 16.0007 5.06398C15.9749 4.65986 16.1953 4.28005 16.559 4.102L16.677 4.054L17.703 3.704L18.053 2.677C18.1912 2.27192 18.572 1.99974 19 2Z" fill="white"/>
-                            </svg>
-                            </span>
-                            <span class="btn-text"> How it works</span>
-                        </a>
-                        
-                        <!-- Button to show certificate modal -->
-                        <a href="javascript:void(0);" class="td-btn btn-fill-border radius-8" data-bs-toggle="modal" data-bs-target="#certificateModal">
-                            <span class="btn-icon"><i class="fas fa-certificate"></i></span>
-                            <span class="btn-text">View Certificate</span>
-                        </a>
-                        
-                        <!-- Button to show video modal -->
-                        <a href="javascript:void(0);" class="td-btn gradient-btn radius-8" data-bs-toggle="modal" data-bs-target="#videoModal">
-                            <span class="btn-icon"><i class="fas fa-play-circle"></i></span>
-                            <span class="btn-text">Watch Company Video</span>
-                        </a>
-                    </div>
-                </div>
+            <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ color: COLORS.accent, fontSize: 13, fontWeight: 600 }}>▲ +{mockData.wallet.change}%</span>
+              <span style={{ color: COLORS.textMuted, fontSize: 13 }}>vs last month</span>
             </div>
+          </div>
+          <div style={{ display: "flex", gap: 10 }}>
+            {["Top Up", "Withdraw", "Transfer"].map((a, i) => (
+              <button key={i} style={{
+                background: i === 0 ? COLORS.accent : "transparent",
+                color: i === 0 ? COLORS.bg : COLORS.textSecondary,
+                border: `1px solid ${i === 0 ? COLORS.accent : COLORS.border}`,
+                padding: "8px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer",
+              }}>{a}</button>
+            ))}
+          </div>
         </div>
-    </div>
-    <div class="banner-thumb" data-background="https://assentro.com/assets/global/images/fZaVaYm8rpqf2yfXDeYw.png"></div>
-    <div class="banner-glow">
-        <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/banner/01/banner-glow-01.png" alt="Banner Glow">
-    </div>
-    <div class="banner-noise">
-        <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/banner/01/noise-shape.png" alt="">
-    </div>
-    <div class="banner-shapes d-none d-md-block">
-        <div class="shape-one">
-            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/banner/01/electricity-shape.png" alt="Electricity Shape">
+        <div style={{ marginTop: 24 }}>
+          <MiniChart data={mockData.chartData} />
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+            {mockData.months.map((m, i) => (
+              <span key={i} style={{ fontSize: 9, color: COLORS.textMuted, fontFamily: "monospace" }}>{m}</span>
+            ))}
+          </div>
         </div>
-        <div class="shape-two">
-            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/banner/01/electricity-shape.png" alt="Electricity Shape">
-        </div>
-        <div class="shape-three">
-            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/banner/01/electricity-shape.png" alt="Electricity Shape">
-        </div>
-        <div class="shape-four">
-            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/banner/01/electricity-shape.png" alt="Electricity Shape">
-        </div>
-    </div>
-</div>
+      </div>
 
-<!-- Certificate Modal -->
-<div class="modal fade" id="certificateModal" tabindex="-1" aria-labelledby="certificateModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="certificateModalLabel">Company Certificate</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      {/* Stats Grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
+        {mockData.stats.map((s, i) => (
+          <div key={i} style={{
+            background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 12,
+            padding: 20, position: "relative", overflow: "hidden",
+          }}>
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: s.color, opacity: 0.6 }} />
+            <div style={{ fontSize: 22, marginBottom: 8 }}>
+              <span style={{ color: s.color }}>{s.icon}</span>
+            </div>
+            <div style={{ color: COLORS.textSecondary, fontSize: 12, marginBottom: 4 }}>{s.label}</div>
+            <div style={{ color: COLORS.textPrimary, fontSize: 20, fontWeight: 700 }}>{s.value}</div>
+            <div style={{ color: COLORS.accent, fontSize: 12, marginTop: 4 }}>{s.trend} this month</div>
+          </div>
+        ))}
       </div>
-      <div class="modal-body text-center">
-        <img src="https://assentro.com/assets/assentro_certificate.png" class="img-fluid" alt="Company Certificate">
+
+      {/* Bottom Row */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        {/* Recent Transactions */}
+        <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <h3 style={{ color: COLORS.textPrimary, fontSize: 14, fontWeight: 700, margin: 0 }}>Recent Transactions</h3>
+            <span style={{ color: COLORS.accent, fontSize: 12, cursor: "pointer" }}>View all →</span>
+          </div>
+          {mockData.transactions.slice(0, 5).map((t, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < 4 ? `1px solid ${COLORS.border}` : "none" }}>
+              <Avatar initials={t.avatar} size={32} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ color: COLORS.textPrimary, fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.user}</div>
+                <div style={{ color: COLORS.textMuted, fontSize: 11 }}>{t.time}</div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ color: t.type === "RECEIVED" ? COLORS.accent : COLORS.textPrimary, fontSize: 13, fontWeight: 700 }}>
+                  {t.type === "RECEIVED" ? "+" : "-"}KES {t.amount.toLocaleString()}
+                </div>
+                <StatusBadge status={t.status} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* AI Insights */}
+        <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+            <span style={{ color: COLORS.accent }}>✦</span>
+            <h3 style={{ color: COLORS.textPrimary, fontSize: 14, fontWeight: 700, margin: 0 }}>AI Financial Insights</h3>
+          </div>
+          {mockData.aiInsights.map((ins, i) => (
+            <div key={i} style={{
+              display: "flex", alignItems: "flex-start", gap: 12, padding: 12,
+              background: `${ins.color}08`, border: `1px solid ${ins.color}22`,
+              borderRadius: 8, marginBottom: 8,
+            }}>
+              <span style={{ fontSize: 18 }}>{ins.icon}</span>
+              <div>
+                <div style={{ color: ins.color, fontSize: 12, fontWeight: 700 }}>{ins.title}</div>
+                <div style={{ color: COLORS.textSecondary, fontSize: 12, marginTop: 2 }}>{ins.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
-  </div>
-</div>
+  );
+}
 
-<!-- Video Modal -->
-<div class="modal fade" id="videoModal" tabindex="-1" aria-labelledby="videoModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-xl">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="videoModalLabel">Company Overview</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="stopVideo()"></button>
+function TransactionsView() {
+  const [filter, setFilter] = useState("ALL");
+  const types = ["ALL", "RECEIVED", "SENT", "WITHDRAWAL", "PAYBILL", "SUBSCRIPTION"];
+  const filtered = filter === "ALL" ? mockData.transactions : mockData.transactions.filter(t => t.type === filter);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+        <h2 style={{ color: COLORS.textPrimary, fontSize: 20, fontWeight: 700, margin: 0 }}>Transaction Monitor</h2>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {types.map(t => (
+            <button key={t} onClick={() => setFilter(t)} style={{
+              background: filter === t ? COLORS.accent : "transparent",
+              color: filter === t ? COLORS.bg : COLORS.textSecondary,
+              border: `1px solid ${filter === t ? COLORS.accent : COLORS.border}`,
+              padding: "5px 12px", borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer",
+            }}>{t}</button>
+          ))}
+        </div>
       </div>
-      <div class="modal-body ratio ratio-16x9">
-        <iframe id="companyVideo" src="https://www.youtube.com/embed/aARYYkQ9S2M?enablejsapi=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+      <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 12, overflow: "hidden" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ borderBottom: `1px solid ${COLORS.border}` }}>
+              {["Transaction ID", "User", "Type", "Amount", "Method", "Time", "Status"].map(h => (
+                <th key={h} style={{ padding: "12px 16px", color: COLORS.textMuted, fontSize: 11, fontWeight: 600, textAlign: "left", letterSpacing: "0.08em", textTransform: "uppercase" }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((t, i) => (
+              <tr key={i} style={{ borderBottom: `1px solid ${COLORS.border}22`, transition: "background 0.15s" }}
+                onMouseEnter={e => e.currentTarget.style.background = `${COLORS.accent}05`}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                <td style={{ padding: "12px 16px", color: COLORS.textMuted, fontSize: 12, fontFamily: "monospace" }}>{t.id}</td>
+                <td style={{ padding: "12px 16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <Avatar initials={t.avatar} size={28} />
+                    <span style={{ color: COLORS.textPrimary, fontSize: 13 }}>{t.user}</span>
+                  </div>
+                </td>
+                <td style={{ padding: "12px 16px" }}><TypeBadge type={t.type} /></td>
+                <td style={{ padding: "12px 16px", color: t.type === "RECEIVED" ? COLORS.accent : COLORS.textPrimary, fontSize: 13, fontWeight: 700 }}>
+                  {t.type === "RECEIVED" ? "+" : "-"}KES {t.amount.toLocaleString()}
+                </td>
+                <td style={{ padding: "12px 16px", color: COLORS.textSecondary, fontSize: 12 }}>{t.method}</td>
+                <td style={{ padding: "12px 16px", color: COLORS.textMuted, fontSize: 12 }}>{t.time}</td>
+                <td style={{ padding: "12px 16px" }}><StatusBadge status={t.status} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
-  </div>
-</div>
+  );
+}
 
-<script>
-    function stopVideo() {
-        const iframe = document.getElementById("companyVideo");
-        iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
+function UsersView() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h2 style={{ color: COLORS.textPrimary, fontSize: 20, fontWeight: 700, margin: 0 }}>User Management</h2>
+        <button style={{ background: COLORS.accent, color: COLORS.bg, border: "none", padding: "8px 16px", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+          + Add User
+        </button>
+      </div>
+      <div style={{ display: "grid", gap: 12 }}>
+        {mockData.users.map((u, i) => (
+          <div key={i} style={{
+            background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20,
+            display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap",
+            transition: "border-color 0.2s",
+          }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = `${COLORS.accent}44`}
+            onMouseLeave={e => e.currentTarget.style.borderColor = COLORS.border}>
+            <Avatar initials={u.name.split(" ").map(n => n[0]).join("")} size={44} />
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <span style={{ color: COLORS.textPrimary, fontSize: 15, fontWeight: 700 }}>{u.name}</span>
+                <TierBadge tier={u.tier} />
+              </div>
+              <div style={{ color: COLORS.textMuted, fontSize: 12, marginTop: 2 }}>{u.phone} · Joined {u.joined}</div>
+            </div>
+            <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ color: COLORS.accent, fontSize: 16, fontWeight: 700 }}>KES {u.balance.toLocaleString()}</div>
+                <div style={{ color: COLORS.textMuted, fontSize: 11 }}>Balance</div>
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ color: COLORS.textPrimary, fontSize: 16, fontWeight: 700 }}>{u.txns}</div>
+                <div style={{ color: COLORS.textMuted, fontSize: 11 }}>Transactions</div>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button style={{ background: "transparent", border: `1px solid ${COLORS.border}`, color: COLORS.textSecondary, padding: "6px 14px", borderRadius: 6, fontSize: 12, cursor: "pointer" }}>View</button>
+              <button style={{ background: `${COLORS.accent}15`, border: `1px solid ${COLORS.accent}44`, color: COLORS.accent, padding: "6px 14px", borderRadius: 6, fontSize: 12, cursor: "pointer" }}>Message</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function WhatsAppView() {
+  const [messages, setMessages] = useState(mockData.chatMessages);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const bottomRef = useRef(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const sendMessage = async () => {
+    if (!input.trim() || loading) return;
+    const userMsg = { from: "user", text: input, time: new Date().toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit" }) };
+    setMessages(m => [...m, userMsg]);
+    setInput("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system: `You are PesaBot, an AI-powered WhatsApp financial assistant for a Kenya-based digital wallet platform. 
+          You help users check balances, send money, pay bills, track spending, and get financial advice.
+          Keep responses concise, friendly, and formatted like WhatsApp messages (use *bold* for emphasis, emojis naturally).
+          The user's name is Alice, their balance is KES 43,200, and they're a VIP member.
+          Always respond in a helpful, conversational fintech bot style. Max 3-4 lines.`,
+          messages: [{ role: "user", content: input }],
+        }),
+      });
+      const data = await res.json();
+      const text = data.content?.[0]?.text || "Sorry, I couldn't process that right now. Try again!";
+      setMessages(m => [...m, { from: "bot", text, time: new Date().toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit" }) }]);
+    } catch {
+      setMessages(m => [...m, { from: "bot", text: "⚠️ Connection error. Please try again.", time: new Date().toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit" }) }]);
     }
+    setLoading(false);
+  };
 
-    // Pause video when modal is closed
-    document.getElementById('videoModal').addEventListener('hidden.bs.modal', stopVideo);
-</script>
+  const quickReplies = ["Check balance", "Send money", "Pay bill", "View transactions", "Get financial tips"];
 
-                    <!-- Profit section start -->
-<section class="td-plan-profit-section p-relative section_space-bottom">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-xxl-6 col-xl-6 col-lg-8">
-                <div class="section-title-wrapper text-center section_title_space">
-                    <span class="section-subtitle">Estimate Your Earnings</span>
-                    <h2 class="section-title has_fade_anim">Use Our Profit Calculator to See How Your Investment Grows</h2>
-                </div>
-            </div>
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 20, height: "calc(100vh - 160px)" }}>
+      {/* Chat Interface */}
+      <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 12, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        {/* Chat Header */}
+        <div style={{ padding: "16px 20px", borderBottom: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 38, height: 38, borderRadius: "50%", background: `${COLORS.whatsapp}22`, border: `2px solid ${COLORS.whatsapp}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🤖</div>
+          <div>
+            <div style={{ color: COLORS.textPrimary, fontWeight: 700, fontSize: 14 }}>PesaBot</div>
+            <div style={{ color: COLORS.accent, fontSize: 11 }}>● Online · AI Powered</div>
+          </div>
+          <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+            <div style={{ padding: "4px 10px", background: `${COLORS.whatsapp}15`, border: `1px solid ${COLORS.whatsapp}33`, borderRadius: 6, color: COLORS.whatsapp, fontSize: 11, fontWeight: 600 }}>WhatsApp Live</div>
+          </div>
         </div>
-        <div class="row justify-content-center ">
-            <div class="col-xxl-8 col-xl-8 col-lg-8">
-                <div class="plan-profit-box">
-                    <div class="plan-profit-form has_fade_anim" data-fade-from="bottom" data-delay="0.15">
-                        <form action="#">
-                            <div class="row gy-30">
-                                <div class="col-xxl-12">
-                                    <div class="td-form-group">
-                                        <label class="floating-label">Select Plane</label>
-                                        <div class="input-field">
-                                            <select id="select2Icons" class="select2-icons form-select" name="selectCalculationPlan">
-                                                                                                <option value="5">Plan 1
-                                                    ($100-$299)</option>
-                                                                                                <option value="6">Plan 2
-                                                    ($300-$999)</option>
-                                                                                                <option value="7">Plan 3
-                                                    ($1000-$4999)</option>
-                                                                                                <option value="8">Plan 4
-                                                    ($5000-$1000000)</option>
-                                                                                                <option value="9">PROMO PLAN
-                                                    ($1000-$10000)</option>
-                                                                                            </select>
-                                        </div>
-                                        <p class="feedback-invalid">This field is required</p>
-                                    </div>
-                                </div>
-                                <div class="col-xxl-12">
-                                    <div class="td-form-group input-fill has-right-icon">
-                                        <label class="floating-label">Enter Amount</label>
-                                        <div class="input-field">
-                                            <input type="email" id="enter-amount" class="form-control" placeholder="Amount" required>
-                                            <span class="input-icon"><i class="icon-dollar-circle"></i></span>
-                                        </div>
-                                        <p class="feedback-invalid">This field is required</p>
-                                    </div>
-                                </div>
-                                <div class="col-xxl-12">
-                                    <div class="td-form-group input-fill has-right-icon">
-                                        <label class="floating-label">Profit</label>
-                                        <div class="input-field">
-                                            <input type="text" id="profit" class="form-control" placeholder="0" disabled>
-                                            <span class="input-icon"><i class="icon-dollar-circle"></i></span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-xxl-12">
-                                    <div class="btn-inner">
-                                        <a class="td-btn gradient-btn radius-8" href="https://assentro.com/register">
-                                             <span class="btn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M9.107 5.448C9.705 3.698 12.123 3.645 12.832 5.289L12.892 5.449L13.699 7.809C14.0732 8.90406 14.9033 9.7834 15.975 10.22L16.192 10.301L18.552 11.107C20.302 11.705 20.355 14.123 18.712 14.832L18.552 14.892L16.192 15.699C15.0966 16.0729 14.2168 16.9031 13.78 17.975L13.699 18.191L12.893 20.552C12.295 22.302 9.877 22.355 9.169 20.712L9.107 20.552L8.301 18.192C7.92706 17.0966 7.09692 16.2168 6.025 15.78L5.809 15.699L3.449 14.893C1.698 14.295 1.645 11.877 3.289 11.169L3.449 11.107L5.809 10.301C6.90406 9.92681 7.7834 9.09671 8.22 8.025L8.301 7.809M11 6.094L10.194 8.454C9.62401 10.1245 8.34742 11.4592 6.704 12.103L6.454 12.194L4.094 13L6.454 13.806C8.12445 14.376 9.4592 15.6526 10.103 17.296L10.194 17.546L11 19.906L11.806 17.546C12.376 15.8755 13.6526 14.5408 15.296 13.897L15.546 13.807L17.906 13L15.546 12.194C13.8755 11.624 12.5408 10.3474 11.897 8.704L11.807 8.454M19 2C19.3817 2 19.7301 2.21726 19.898 2.56L19.946 2.677L20.296 3.703L21.323 4.053C21.7064 4.18326 21.9734 4.5319 21.9993 4.93602C22.0251 5.34014 21.8047 5.71995 21.441 5.898L21.323 5.946L20.297 6.296L19.947 7.323C19.8165 7.70631 19.4677 7.9731 19.0636 7.99872C18.6595 8.02435 18.2799 7.80376 18.102 7.44L18.054 7.323L17.704 6.297L16.677 5.947C16.2936 5.81674 16.0266 5.4681 16.0007 5.06398C15.9749 4.65986 16.1953 4.28005 16.559 4.102L16.677 4.054L17.703 3.704L18.053 2.677C18.1912 2.27192 18.572 1.99974 19 2Z" fill="white"></path>
-                                                </svg>
-                                             </span>
-                                            <span class="btn-text">Let’s Start Earning</span>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
+
+        {/* Messages */}
+        <div style={{ flex: 1, overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 10, background: `${COLORS.bg}88` }}>
+          {messages.map((msg, i) => (
+            <div key={i} style={{ display: "flex", justifyContent: msg.from === "user" ? "flex-end" : "flex-start" }}>
+              <div style={{
+                maxWidth: "75%", background: msg.from === "user" ? `${COLORS.accent}20` : COLORS.surface,
+                border: `1px solid ${msg.from === "user" ? COLORS.accent + "44" : COLORS.border}`,
+                borderRadius: msg.from === "user" ? "12px 12px 4px 12px" : "12px 12px 12px 4px",
+                padding: "10px 14px",
+              }}>
+                <div style={{ color: COLORS.textPrimary, fontSize: 13, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
+                  {msg.text.split(/\*([^*]+)\*/g).map((part, j) =>
+                    j % 2 === 1 ? <strong key={j} style={{ color: COLORS.accent }}>{part}</strong> : part
+                  )}
                 </div>
+                <div style={{ color: COLORS.textMuted, fontSize: 10, marginTop: 4, textAlign: "right" }}>{msg.time}</div>
+              </div>
             </div>
+          ))}
+          {loading && (
+            <div style={{ display: "flex", gap: 4, padding: "12px 14px", background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: "12px 12px 12px 4px", width: "fit-content" }}>
+              {[0, 1, 2].map(i => (
+                <div key={i} style={{ width: 6, height: 6, borderRadius: "50%", background: COLORS.accent, animation: `bounce 1s ${i * 0.2}s infinite` }} />
+              ))}
+            </div>
+          )}
+          <div ref={bottomRef} />
         </div>
+
+        {/* Quick Replies */}
+        <div style={{ padding: "8px 16px", display: "flex", gap: 6, overflowX: "auto", borderTop: `1px solid ${COLORS.border}22` }}>
+          {quickReplies.map((q, i) => (
+            <button key={i} onClick={() => setInput(q)} style={{
+              whiteSpace: "nowrap", background: "transparent", border: `1px solid ${COLORS.border}`,
+              color: COLORS.textSecondary, padding: "4px 10px", borderRadius: 20, fontSize: 11, cursor: "pointer",
+            }}>{q}</button>
+          ))}
+        </div>
+
+        {/* Input */}
+        <div style={{ padding: "12px 16px", borderTop: `1px solid ${COLORS.border}`, display: "flex", gap: 10, alignItems: "center" }}>
+          <input
+            value={input} onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && sendMessage()}
+            placeholder="Type a message to PesaBot..."
+            style={{
+              flex: 1, background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 24,
+              padding: "10px 16px", color: COLORS.textPrimary, fontSize: 13, outline: "none",
+            }}
+          />
+          <button onClick={sendMessage} style={{
+            width: 40, height: 40, borderRadius: "50%", background: COLORS.accent,
+            border: "none", color: COLORS.bg, fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+          }}>➤</button>
+        </div>
+      </div>
+
+      {/* Bot Stats Sidebar */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20 }}>
+          <h3 style={{ color: COLORS.textPrimary, fontSize: 14, fontWeight: 700, margin: "0 0 16px 0" }}>Bot Performance</h3>
+          {[
+            { label: "Messages Today", value: "2,847", color: COLORS.accent },
+            { label: "Active Chats", value: "312", color: COLORS.blue },
+            { label: "Transactions via Bot", value: "891", color: COLORS.purple },
+            { label: "Avg Response Time", value: "0.8s", color: COLORS.gold },
+            { label: "Success Rate", value: "99.2%", color: COLORS.accent },
+          ].map((s, i) => (
+            <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: i < 4 ? `1px solid ${COLORS.border}22` : "none" }}>
+              <span style={{ color: COLORS.textSecondary, fontSize: 12 }}>{s.label}</span>
+              <span style={{ color: s.color, fontSize: 13, fontWeight: 700 }}>{s.value}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20 }}>
+          <h3 style={{ color: COLORS.textPrimary, fontSize: 14, fontWeight: 700, margin: "0 0 12px 0" }}>Bot Commands</h3>
+          {["balance", "send [amount] to [name]", "pay [bill]", "withdraw [amount]", "transactions", "help"].map((cmd, i) => (
+            <div key={i} style={{ padding: "6px 0", display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ color: COLORS.textMuted, fontSize: 11 }}>◦</span>
+              <code style={{ color: COLORS.accent, fontSize: 12, background: `${COLORS.accent}10`, padding: "2px 8px", borderRadius: 4 }}>{cmd}</code>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
-    <div class="plan-profit-shapes">
-        <div class="shape-one d-none d-md-block">
-            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/plan-profit/shape-01.png" alt="Plan Profit Shape">
+  );
+}
+
+function AnalyticsView() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <h2 style={{ color: COLORS.textPrimary, fontSize: 20, fontWeight: 700, margin: 0 }}>Analytics & Reports</h2>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+        {[
+          { title: "Revenue This Month", value: "KES 284,750", change: "+12.4%", color: COLORS.accent },
+          { title: "Total Transactions", value: "18,421", change: "+8.7%", color: COLORS.blue },
+          { title: "Withdrawal Volume", value: "KES 89,200", change: "+5.1%", color: COLORS.gold },
+        ].map((s, i) => (
+          <div key={i} style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20 }}>
+            <div style={{ color: COLORS.textSecondary, fontSize: 12, marginBottom: 8 }}>{s.title}</div>
+            <div style={{ color: COLORS.textPrimary, fontSize: 24, fontWeight: 800, fontFamily: "monospace" }}>{s.value}</div>
+            <div style={{ color: COLORS.accent, fontSize: 12, marginTop: 4 }}>{s.change} vs last month</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20 }}>
+          <h3 style={{ color: COLORS.textPrimary, fontSize: 14, fontWeight: 700, margin: "0 0 16px 0" }}>Monthly Revenue</h3>
+          <BarChart data={mockData.chartData} labels={mockData.months} />
         </div>
-        <div class="plan-profit-glow">
-            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/plan-profit/glow.png" alt="Plan Profit">
+        <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20 }}>
+          <h3 style={{ color: COLORS.textPrimary, fontSize: 14, fontWeight: 700, margin: "0 0 16px 0" }}>Revenue Breakdown</h3>
+          {[
+            { label: "Transaction Fees", pct: 42, color: COLORS.accent },
+            { label: "Withdrawal Charges", pct: 28, color: COLORS.blue },
+            { label: "Subscription Plans", pct: 18, color: COLORS.purple },
+            { label: "Merchant Commissions", pct: 12, color: COLORS.gold },
+          ].map((r, i) => (
+            <div key={i} style={{ marginBottom: 12 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                <span style={{ color: COLORS.textSecondary, fontSize: 12 }}>{r.label}</span>
+                <span style={{ color: r.color, fontSize: 12, fontWeight: 700 }}>{r.pct}%</span>
+              </div>
+              <div style={{ background: COLORS.border, borderRadius: 4, height: 6 }}>
+                <div style={{ background: r.color, width: `${r.pct}%`, height: "100%", borderRadius: 4, transition: "width 1s ease" }} />
+              </div>
+            </div>
+          ))}
         </div>
+      </div>
     </div>
-</section>
-<!-- Profit section end -->
+  );
+}
 
-                    <!-- Pricing section start -->
-<section class="td-pricing-section p-relative z-index-11 section_space-bottom">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-xxl-6 col-xl-6 col-lg-8">
-                <div class="section-title-wrapper text-center section_title_space">
-                    <span class="section-subtitle">Choose a Plan That Works for You</span>
-                    <h2 class="section-title has_fade_anim">Flexible Investment Plans for Every Stage of Your Wealth Journey</h2>
-                </div>
+function SecurityView() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <h2 style={{ color: COLORS.textPrimary, fontSize: 20, fontWeight: 700, margin: 0 }}>Security Center</h2>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
+        {[
+          { title: "OTP Verification", status: "Active", icon: "🔐", desc: "6-digit OTP sent via WhatsApp for all transactions", color: COLORS.accent },
+          { title: "PIN Protection", status: "Active", icon: "🔒", desc: "4-digit PIN required for withdrawals & transfers", color: COLORS.accent },
+          { title: "Fraud Detection", status: "Active", icon: "🛡️", desc: "AI-powered real-time fraud monitoring", color: COLORS.accent },
+          { title: "Device Verification", status: "Active", icon: "📱", desc: "Trusted device management system", color: COLORS.accent },
+          { title: "Session Management", status: "Active", icon: "⏱️", desc: "Auto-logout after 30 min inactivity", color: COLORS.gold },
+          { title: "Encryption", status: "Active", icon: "🔑", desc: "AES-256 encryption for all transactions", color: COLORS.accent },
+        ].map((s, i) => (
+          <div key={i} style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+              <span style={{ fontSize: 24 }}>{s.icon}</span>
+              <span style={{ background: `${s.color}15`, color: s.color, padding: "2px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700 }}>● {s.status}</span>
             </div>
-        </div>
-        <div class="row gy-30">
-                        <div class="col-xxl-3 col-xl-3 col-lg-4">
-                <div class="has_fade_anim" data-delay="0.15">
-                    <div class="investment-item">
-                        <div class="plan-heading">
-                            <h5 class="title">Plan 1</h5>
-                                                            <span class="info-badge">
-                                Daily 
-                                    10%
-                            </span>
-                                                    </div>
-                        <div class="plan-list">
-                            <ul>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Investment</span>
-                                        </div>
-                                        <span class="price-info">$100-$299</span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Return Type</span>
-                                        </div>
-                                        <span class="price-info">Period</span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Periods</span>
-                                        </div>
-                                        <span class="price-info">
-                                            2 
-
-                                                                                            Times
-                                                                                    </span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Profit withdraw</span>
-                                        </div>
-                                        <span class="price-info">Anytime</span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Cancel</span>
-                                        </div>
-                                        <span class="price-info">
-                                                                                            No
-                                                                                    </span>
-                                    </div>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div class="btn-inner">
-                            <a class="td-btn gradient-btn btn-sm radius-8 w-100" href="https://assentro.com/user/schema-preview/5">
-                                    <span class="btn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                       <path d="M9.107 5.448C9.705 3.698 12.123 3.645 12.832 5.289L12.892 5.449L13.699 7.809C14.0732 8.90406 14.9033 9.7834 15.975 10.22L16.192 10.301L18.552 11.107C20.302 11.705 20.355 14.123 18.712 14.832L18.552 14.892L16.192 15.699C15.0966 16.0729 14.2168 16.9031 13.78 17.975L13.699 18.191L12.893 20.552C12.295 22.302 9.877 22.355 9.169 20.712L9.107 20.552L8.301 18.192C7.92706 17.0966 7.09692 16.2168 6.025 15.78L5.809 15.699L3.449 14.893C1.698 14.295 1.645 11.877 3.289 11.169L3.449 11.107L5.809 10.301C6.90406 9.92681 7.7834 9.09671 8.22 8.025L8.301 7.809M11 6.094L10.194 8.454C9.62401 10.1245 8.34742 11.4592 6.704 12.103L6.454 12.194L4.094 13L6.454 13.806C8.12445 14.376 9.4592 15.6526 10.103 17.296L10.194 17.546L11 19.906L11.806 17.546C12.376 15.8755 13.6526 14.5408 15.296 13.897L15.546 13.807L17.906 13L15.546 12.194C13.8755 11.624 12.5408 10.3474 11.897 8.704L11.807 8.454M19 2C19.3817 2 19.7301 2.21726 19.898 2.56L19.946 2.677L20.296 3.703L21.323 4.053C21.7064 4.18326 21.9734 4.5319 21.9993 4.93602C22.0251 5.34014 21.8047 5.71995 21.441 5.898L21.323 5.946L20.297 6.296L19.947 7.323C19.8165 7.70631 19.4677 7.9731 19.0636 7.99872C18.6595 8.02435 18.2799 7.80376 18.102 7.44L18.054 7.323L17.704 6.297L16.677 5.947C16.2936 5.81674 16.0266 5.4681 16.0007 5.06398C15.9749 4.65986 16.1953 4.28005 16.559 4.102L16.677 4.054L17.703 3.704L18.053 2.677C18.1912 2.27192 18.572 1.99974 19 2Z" fill="white"></path>
-                                       </svg>
-                                    </span>
-                                <span class="btn-text">Invest Now</span>
-                            </a>
-                        </div>
-                        <div class="bottom-contents">
-                            <p class="description">*                                     No Profit
-                                 Holidays</p>
-                        </div>
-                    </div>
-                </div>
+            <div style={{ color: COLORS.textPrimary, fontWeight: 700, marginBottom: 6 }}>{s.title}</div>
+            <div style={{ color: COLORS.textSecondary, fontSize: 12 }}>{s.desc}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20 }}>
+        <h3 style={{ color: COLORS.textPrimary, fontSize: 14, fontWeight: 700, margin: "0 0 16px 0" }}>Recent Security Events</h3>
+        {[
+          { event: "Failed login attempt", user: "Unknown", ip: "196.207.x.x", time: "5 min ago", severity: "high" },
+          { event: "New device login", user: "Alice Wanjiru", ip: "41.90.x.x", time: "12 min ago", severity: "medium" },
+          { event: "Large withdrawal flagged", user: "Brian Odhiambo", ip: "196.216.x.x", time: "1 hr ago", severity: "high" },
+          { event: "PIN reset completed", user: "Carol Njeri", ip: "197.232.x.x", time: "2 hr ago", severity: "low" },
+        ].map((e, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 16, padding: "10px 0", borderBottom: i < 3 ? `1px solid ${COLORS.border}22` : "none", flexWrap: "wrap" }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: e.severity === "high" ? COLORS.red : e.severity === "medium" ? COLORS.gold : COLORS.accent, flexShrink: 0 }} />
+            <div style={{ flex: 1 }}>
+              <span style={{ color: COLORS.textPrimary, fontSize: 13 }}>{e.event}</span>
+              <span style={{ color: COLORS.textMuted, fontSize: 12, marginLeft: 8 }}>· {e.user}</span>
             </div>
-                        <div class="col-xxl-3 col-xl-3 col-lg-4">
-                <div class="has_fade_anim" data-delay="0.15">
-                    <div class="investment-item">
-                        <div class="plan-heading">
-                            <h5 class="title">Plan 2</h5>
-                                                            <span class="info-badge">
-                                Daily 
-                                    15%
-                            </span>
-                                                    </div>
-                        <div class="plan-list">
-                            <ul>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Investment</span>
-                                        </div>
-                                        <span class="price-info">$300-$999</span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Return Type</span>
-                                        </div>
-                                        <span class="price-info">Period</span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Periods</span>
-                                        </div>
-                                        <span class="price-info">
-                                            3 
-
-                                                                                            Times
-                                                                                    </span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Profit withdraw</span>
-                                        </div>
-                                        <span class="price-info">Anytime</span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Cancel</span>
-                                        </div>
-                                        <span class="price-info">
-                                                                                            No
-                                                                                    </span>
-                                    </div>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div class="btn-inner">
-                            <a class="td-btn gradient-btn btn-sm radius-8 w-100" href="https://assentro.com/user/schema-preview/6">
-                                    <span class="btn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                       <path d="M9.107 5.448C9.705 3.698 12.123 3.645 12.832 5.289L12.892 5.449L13.699 7.809C14.0732 8.90406 14.9033 9.7834 15.975 10.22L16.192 10.301L18.552 11.107C20.302 11.705 20.355 14.123 18.712 14.832L18.552 14.892L16.192 15.699C15.0966 16.0729 14.2168 16.9031 13.78 17.975L13.699 18.191L12.893 20.552C12.295 22.302 9.877 22.355 9.169 20.712L9.107 20.552L8.301 18.192C7.92706 17.0966 7.09692 16.2168 6.025 15.78L5.809 15.699L3.449 14.893C1.698 14.295 1.645 11.877 3.289 11.169L3.449 11.107L5.809 10.301C6.90406 9.92681 7.7834 9.09671 8.22 8.025L8.301 7.809M11 6.094L10.194 8.454C9.62401 10.1245 8.34742 11.4592 6.704 12.103L6.454 12.194L4.094 13L6.454 13.806C8.12445 14.376 9.4592 15.6526 10.103 17.296L10.194 17.546L11 19.906L11.806 17.546C12.376 15.8755 13.6526 14.5408 15.296 13.897L15.546 13.807L17.906 13L15.546 12.194C13.8755 11.624 12.5408 10.3474 11.897 8.704L11.807 8.454M19 2C19.3817 2 19.7301 2.21726 19.898 2.56L19.946 2.677L20.296 3.703L21.323 4.053C21.7064 4.18326 21.9734 4.5319 21.9993 4.93602C22.0251 5.34014 21.8047 5.71995 21.441 5.898L21.323 5.946L20.297 6.296L19.947 7.323C19.8165 7.70631 19.4677 7.9731 19.0636 7.99872C18.6595 8.02435 18.2799 7.80376 18.102 7.44L18.054 7.323L17.704 6.297L16.677 5.947C16.2936 5.81674 16.0266 5.4681 16.0007 5.06398C15.9749 4.65986 16.1953 4.28005 16.559 4.102L16.677 4.054L17.703 3.704L18.053 2.677C18.1912 2.27192 18.572 1.99974 19 2Z" fill="white"></path>
-                                       </svg>
-                                    </span>
-                                <span class="btn-text">Invest Now</span>
-                            </a>
-                        </div>
-                        <div class="bottom-contents">
-                            <p class="description">*                                     No Profit
-                                 Holidays</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-                        <div class="col-xxl-3 col-xl-3 col-lg-4">
-                <div class="has_fade_anim" data-delay="0.15">
-                    <div class="investment-item">
-                        <div class="plan-heading">
-                            <h5 class="title">Plan 3</h5>
-                                                            <span class="info-badge">
-                                Daily 
-                                    20%
-                            </span>
-                                                    </div>
-                        <div class="plan-list">
-                            <ul>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Investment</span>
-                                        </div>
-                                        <span class="price-info">$1000-$4999</span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Return Type</span>
-                                        </div>
-                                        <span class="price-info">Period</span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Periods</span>
-                                        </div>
-                                        <span class="price-info">
-                                            4 
-
-                                                                                            Times
-                                                                                    </span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Profit withdraw</span>
-                                        </div>
-                                        <span class="price-info">Anytime</span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Cancel</span>
-                                        </div>
-                                        <span class="price-info">
-                                                                                            No
-                                                                                    </span>
-                                    </div>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div class="btn-inner">
-                            <a class="td-btn gradient-btn btn-sm radius-8 w-100" href="https://assentro.com/user/schema-preview/7">
-                                    <span class="btn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                       <path d="M9.107 5.448C9.705 3.698 12.123 3.645 12.832 5.289L12.892 5.449L13.699 7.809C14.0732 8.90406 14.9033 9.7834 15.975 10.22L16.192 10.301L18.552 11.107C20.302 11.705 20.355 14.123 18.712 14.832L18.552 14.892L16.192 15.699C15.0966 16.0729 14.2168 16.9031 13.78 17.975L13.699 18.191L12.893 20.552C12.295 22.302 9.877 22.355 9.169 20.712L9.107 20.552L8.301 18.192C7.92706 17.0966 7.09692 16.2168 6.025 15.78L5.809 15.699L3.449 14.893C1.698 14.295 1.645 11.877 3.289 11.169L3.449 11.107L5.809 10.301C6.90406 9.92681 7.7834 9.09671 8.22 8.025L8.301 7.809M11 6.094L10.194 8.454C9.62401 10.1245 8.34742 11.4592 6.704 12.103L6.454 12.194L4.094 13L6.454 13.806C8.12445 14.376 9.4592 15.6526 10.103 17.296L10.194 17.546L11 19.906L11.806 17.546C12.376 15.8755 13.6526 14.5408 15.296 13.897L15.546 13.807L17.906 13L15.546 12.194C13.8755 11.624 12.5408 10.3474 11.897 8.704L11.807 8.454M19 2C19.3817 2 19.7301 2.21726 19.898 2.56L19.946 2.677L20.296 3.703L21.323 4.053C21.7064 4.18326 21.9734 4.5319 21.9993 4.93602C22.0251 5.34014 21.8047 5.71995 21.441 5.898L21.323 5.946L20.297 6.296L19.947 7.323C19.8165 7.70631 19.4677 7.9731 19.0636 7.99872C18.6595 8.02435 18.2799 7.80376 18.102 7.44L18.054 7.323L17.704 6.297L16.677 5.947C16.2936 5.81674 16.0266 5.4681 16.0007 5.06398C15.9749 4.65986 16.1953 4.28005 16.559 4.102L16.677 4.054L17.703 3.704L18.053 2.677C18.1912 2.27192 18.572 1.99974 19 2Z" fill="white"></path>
-                                       </svg>
-                                    </span>
-                                <span class="btn-text">Invest Now</span>
-                            </a>
-                        </div>
-                        <div class="bottom-contents">
-                            <p class="description">*                                     No Profit
-                                 Holidays</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-                        <div class="col-xxl-3 col-xl-3 col-lg-4">
-                <div class="has_fade_anim" data-delay="0.15">
-                    <div class="investment-item">
-                        <div class="plan-heading">
-                            <h5 class="title">Plan 4</h5>
-                                                            <span class="info-badge">
-                                Daily 
-                                    33.3%
-                            </span>
-                                                    </div>
-                        <div class="plan-list">
-                            <ul>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Investment</span>
-                                        </div>
-                                        <span class="price-info">$5000-$1000000</span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Return Type</span>
-                                        </div>
-                                        <span class="price-info">Period</span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Periods</span>
-                                        </div>
-                                        <span class="price-info">
-                                            6 
-
-                                                                                            Times
-                                                                                    </span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Profit withdraw</span>
-                                        </div>
-                                        <span class="price-info">Anytime</span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Cancel</span>
-                                        </div>
-                                        <span class="price-info">
-                                                                                            No
-                                                                                    </span>
-                                    </div>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div class="btn-inner">
-                            <a class="td-btn gradient-btn btn-sm radius-8 w-100" href="https://assentro.com/user/schema-preview/8">
-                                    <span class="btn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                       <path d="M9.107 5.448C9.705 3.698 12.123 3.645 12.832 5.289L12.892 5.449L13.699 7.809C14.0732 8.90406 14.9033 9.7834 15.975 10.22L16.192 10.301L18.552 11.107C20.302 11.705 20.355 14.123 18.712 14.832L18.552 14.892L16.192 15.699C15.0966 16.0729 14.2168 16.9031 13.78 17.975L13.699 18.191L12.893 20.552C12.295 22.302 9.877 22.355 9.169 20.712L9.107 20.552L8.301 18.192C7.92706 17.0966 7.09692 16.2168 6.025 15.78L5.809 15.699L3.449 14.893C1.698 14.295 1.645 11.877 3.289 11.169L3.449 11.107L5.809 10.301C6.90406 9.92681 7.7834 9.09671 8.22 8.025L8.301 7.809M11 6.094L10.194 8.454C9.62401 10.1245 8.34742 11.4592 6.704 12.103L6.454 12.194L4.094 13L6.454 13.806C8.12445 14.376 9.4592 15.6526 10.103 17.296L10.194 17.546L11 19.906L11.806 17.546C12.376 15.8755 13.6526 14.5408 15.296 13.897L15.546 13.807L17.906 13L15.546 12.194C13.8755 11.624 12.5408 10.3474 11.897 8.704L11.807 8.454M19 2C19.3817 2 19.7301 2.21726 19.898 2.56L19.946 2.677L20.296 3.703L21.323 4.053C21.7064 4.18326 21.9734 4.5319 21.9993 4.93602C22.0251 5.34014 21.8047 5.71995 21.441 5.898L21.323 5.946L20.297 6.296L19.947 7.323C19.8165 7.70631 19.4677 7.9731 19.0636 7.99872C18.6595 8.02435 18.2799 7.80376 18.102 7.44L18.054 7.323L17.704 6.297L16.677 5.947C16.2936 5.81674 16.0266 5.4681 16.0007 5.06398C15.9749 4.65986 16.1953 4.28005 16.559 4.102L16.677 4.054L17.703 3.704L18.053 2.677C18.1912 2.27192 18.572 1.99974 19 2Z" fill="white"></path>
-                                       </svg>
-                                    </span>
-                                <span class="btn-text">Invest Now</span>
-                            </a>
-                        </div>
-                        <div class="bottom-contents">
-                            <p class="description">*                                     No Profit
-                                 Holidays</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-                        <div class="col-xxl-3 col-xl-3 col-lg-4">
-                <div class="has_fade_anim" data-delay="0.15">
-                    <div class="investment-item">
-                        <div class="plan-heading">
-                            <h5 class="title">PROMO PLAN</h5>
-                                                            <span class="info-badge">
-                                Daily 
-                                    300%
-                            </span>
-                                                    </div>
-                        <div class="plan-list">
-                            <ul>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Investment</span>
-                                        </div>
-                                        <span class="price-info">$1000-$10000</span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Return Type</span>
-                                        </div>
-                                        <span class="price-info">Period</span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Periods</span>
-                                        </div>
-                                        <span class="price-info">
-                                            1 
-
-                                                                                            Time
-                                                                                    </span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Profit withdraw</span>
-                                        </div>
-                                        <span class="price-info">Anytime</span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="plan-content-list">
-                                        <div class="list-info">
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/icons/check.png" alt="check">
-                                            <span>Cancel</span>
-                                        </div>
-                                        <span class="price-info">
-                                                                                            No
-                                                                                    </span>
-                                    </div>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div class="btn-inner">
-                            <a class="td-btn gradient-btn btn-sm radius-8 w-100" href="https://assentro.com/user/schema-preview/9">
-                                    <span class="btn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                       <path d="M9.107 5.448C9.705 3.698 12.123 3.645 12.832 5.289L12.892 5.449L13.699 7.809C14.0732 8.90406 14.9033 9.7834 15.975 10.22L16.192 10.301L18.552 11.107C20.302 11.705 20.355 14.123 18.712 14.832L18.552 14.892L16.192 15.699C15.0966 16.0729 14.2168 16.9031 13.78 17.975L13.699 18.191L12.893 20.552C12.295 22.302 9.877 22.355 9.169 20.712L9.107 20.552L8.301 18.192C7.92706 17.0966 7.09692 16.2168 6.025 15.78L5.809 15.699L3.449 14.893C1.698 14.295 1.645 11.877 3.289 11.169L3.449 11.107L5.809 10.301C6.90406 9.92681 7.7834 9.09671 8.22 8.025L8.301 7.809M11 6.094L10.194 8.454C9.62401 10.1245 8.34742 11.4592 6.704 12.103L6.454 12.194L4.094 13L6.454 13.806C8.12445 14.376 9.4592 15.6526 10.103 17.296L10.194 17.546L11 19.906L11.806 17.546C12.376 15.8755 13.6526 14.5408 15.296 13.897L15.546 13.807L17.906 13L15.546 12.194C13.8755 11.624 12.5408 10.3474 11.897 8.704L11.807 8.454M19 2C19.3817 2 19.7301 2.21726 19.898 2.56L19.946 2.677L20.296 3.703L21.323 4.053C21.7064 4.18326 21.9734 4.5319 21.9993 4.93602C22.0251 5.34014 21.8047 5.71995 21.441 5.898L21.323 5.946L20.297 6.296L19.947 7.323C19.8165 7.70631 19.4677 7.9731 19.0636 7.99872C18.6595 8.02435 18.2799 7.80376 18.102 7.44L18.054 7.323L17.704 6.297L16.677 5.947C16.2936 5.81674 16.0266 5.4681 16.0007 5.06398C15.9749 4.65986 16.1953 4.28005 16.559 4.102L16.677 4.054L17.703 3.704L18.053 2.677C18.1912 2.27192 18.572 1.99974 19 2Z" fill="white"></path>
-                                       </svg>
-                                    </span>
-                                <span class="btn-text">Invest Now</span>
-                            </a>
-                        </div>
-                        <div class="bottom-contents">
-                            <p class="description">*                                     No Profit
-                                 Holidays</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-                    </div>
+            <span style={{ color: COLORS.textMuted, fontSize: 11, fontFamily: "monospace" }}>{e.ip}</span>
+            <span style={{ color: COLORS.textMuted, fontSize: 11 }}>{e.time}</span>
+          </div>
+        ))}
+      </div>
     </div>
-    <div class="price-bg">
-        <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/bg/price-bg.png" alt="Price Glow">
-    </div>
-</section>
-<!-- Pricing section end -->                    <!-- How it works section start -->
-<section class="td-how-it-works-section section_space position-relative z-index-11 fix">
-    <div class="works-grid-bg-shape">
-        <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/bg/grid-bg.png" alt="Grid Bg">
-    </div>
-    <div class="how-it-works-shapes">
-        <div class="shape-one">
-            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/how-it-works/line-shape.png" alt="line-shape">
-        </div>
-    </div>
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-xxl-8 col-xl-8 col-lg-8">
-                <div class="section-title-wrapper text-center section_title_space">
-                    <span class="section-subtitle">Simple Steps to Start Investing</span>
-                    <h2 class="section-title has_fade_anim">From Sign-Up to Profit — It’s Easy with Assentro</h2>
-                </div>
-            </div>
-        </div>
-        <div class="how-it-works-items">
-            <div class="row">
-                                <div class="col-xxl-3 col-xl-3 col-lg-3 col-md-6 col-sm-6 col-xs-6">
-                    <div class="how-it-works-item has_fade_anim" data-delay="0.15">
-                        <div class="inner">
-                            <div class="icon">
-                                <img src="https://assentro.com/assets/global/images/rgcX1UNOLmbtZ3FqaTRF.png" alt="how-it-works">
-                            </div>
-                            <div class="contents">
-                                <h5 class="title">Create Your Free Account</h5>
-                                <p class="description">Sign up in minutes with just your name, email, and password. No complicated paperwork or long waiting time.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                                <div class="col-xxl-3 col-xl-3 col-lg-3 col-md-6 col-sm-6 col-xs-6">
-                    <div class="how-it-works-item has_fade_anim" data-delay="0.15">
-                        <div class="inner">
-                            <div class="icon">
-                                <img src="https://assentro.com/assets/global/images/MDUaupZdxAhfolZvx45O.png" alt="how-it-works">
-                            </div>
-                            <div class="contents">
-                                <h5 class="title">Choose an Investment Plan</h5>
-                                <p class="description">Select from a range of expertly designed plans across Crypto, Real Estate, Agro-Farming, and Oil &amp; Gas—tailored to fit your goals.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                                <div class="col-xxl-3 col-xl-3 col-lg-3 col-md-6 col-sm-6 col-xs-6">
-                    <div class="how-it-works-item has_fade_anim" data-delay="0.15">
-                        <div class="inner">
-                            <div class="icon">
-                                <img src="https://assentro.com/assets/global/images/L1ECnG95L3DhstexQnnM.png" alt="how-it-works">
-                            </div>
-                            <div class="contents">
-                                <h5 class="title">Earn &amp; Track Your Profits</h5>
-                                <p class="description">Watch your investments grow in real-time. Get detailed reports and withdraw your earnings with ease whenever you’re ready.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                                <div class="col-xxl-3 col-xl-3 col-lg-3 col-md-6 col-sm-6 col-xs-6">
-                    <div class="how-it-works-item has_fade_anim" data-delay="0.15">
-                        <div class="inner">
-                            <div class="icon">
-                                <img src="https://assentro.com/assets/global/images/2g9vjNJusvgnhyot90kY.png" alt="how-it-works">
-                            </div>
-                            <div class="contents">
-                                <h5 class="title">Watch Your Wealth Grow</h5>
-                                <p class="description">Track your investment performance live, receive timely profit updates, and withdraw earnings anytime with full transparency.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                            </div>
-        </div>
-    </div>
-</section>
-<!-- How it works section end -->                    <!-- Investors section start -->
-<section class="td-investors-section section_space-bottom p-relative o-x-clip">
-    <div class="container">
-        <div class="row gy-30">
-            <div class="col-xxl-6 col-xl-6 col-lg-6">
-                <div class="section-title-wrapper section_title_space">
-                    <span class="section-subtitle">Latest Investors and Withdraws</span>
-                    <h2 class="section-title has_fade_anim">You can explore the live investments and withdraws</h2>
-                </div>
-                <div class="table-container table-responsive has_fade_anim" data-fade-from="left">
-                    <div class="table-heading">
-                        <h4 class="title">Recent Withdraws</h4>
-                    </div>
-                    <table class="td-table">
-                        <tbody>
-                                                <tr>
-                            <td>
-                                <div class="description">
-                                    <div class="icon">
-                                          <span>
-                                             <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/investors/icons/withdraw.png" alt="Withdraw Icons">
-                                          </span>
-                                    </div>
-                                    <div class="contents">
-                                        <h6 class="subject-title">Withdraw With USDT TRC20-USDT</h6>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="date">May 12 2026 10:39</span>
-                                            <span class="td-badge badge-warning">
-                                                Success
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="warning-text fs-12 fw-5">
-                                                                            -800 USD
-                                                                    </span>
-                                <p style="color: #b7d3ff;" class="fs-14 fw-6">Total: 800 USD</p>
-                            </td>
-                        </tr>
-                                                <tr>
-                            <td>
-                                <div class="description">
-                                    <div class="icon">
-                                          <span>
-                                             <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/investors/icons/withdraw.png" alt="Withdraw Icons">
-                                          </span>
-                                    </div>
-                                    <div class="contents">
-                                        <h6 class="subject-title">Withdraw With USDT TRC20-USDT</h6>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="date">May 12 2026 10:38</span>
-                                            <span class="td-badge badge-warning">
-                                                Success
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="warning-text fs-12 fw-5">
-                                                                            -600 USD
-                                                                    </span>
-                                <p style="color: #b7d3ff;" class="fs-14 fw-6">Total: 600 USD</p>
-                            </td>
-                        </tr>
-                                                <tr>
-                            <td>
-                                <div class="description">
-                                    <div class="icon">
-                                          <span>
-                                             <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/investors/icons/withdraw.png" alt="Withdraw Icons">
-                                          </span>
-                                    </div>
-                                    <div class="contents">
-                                        <h6 class="subject-title">Withdraw With USDT TRC20-USDT</h6>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="date">May 12 2026 06:24</span>
-                                            <span class="td-badge badge-warning">
-                                                Success
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="warning-text fs-12 fw-5">
-                                                                            -2100 USD
-                                                                    </span>
-                                <p style="color: #b7d3ff;" class="fs-14 fw-6">Total: 2100 USD</p>
-                            </td>
-                        </tr>
-                                                <tr>
-                            <td>
-                                <div class="description">
-                                    <div class="icon">
-                                          <span>
-                                             <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/investors/icons/withdraw.png" alt="Withdraw Icons">
-                                          </span>
-                                    </div>
-                                    <div class="contents">
-                                        <h6 class="subject-title">Withdraw With USDT TRC20-USDT</h6>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="date">May 11 2026 08:03</span>
-                                            <span class="td-badge badge-warning">
-                                                Success
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="warning-text fs-12 fw-5">
-                                                                            -3922.5 USD
-                                                                    </span>
-                                <p style="color: #b7d3ff;" class="fs-14 fw-6">Total: 3922.5 USD</p>
-                            </td>
-                        </tr>
-                                                <tr>
-                            <td>
-                                <div class="description">
-                                    <div class="icon">
-                                          <span>
-                                             <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/investors/icons/withdraw.png" alt="Withdraw Icons">
-                                          </span>
-                                    </div>
-                                    <div class="contents">
-                                        <h6 class="subject-title">Withdraw With USDT TRC20-USDT</h6>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="date">May 09 2026 07:31</span>
-                                            <span class="td-badge badge-warning">
-                                                Success
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="warning-text fs-12 fw-5">
-                                                                            -1200 USD
-                                                                    </span>
-                                <p style="color: #b7d3ff;" class="fs-14 fw-6">Total: 1200 USD</p>
-                            </td>
-                        </tr>
-                                                <tr>
-                            <td>
-                                <div class="description">
-                                    <div class="icon">
-                                          <span>
-                                             <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/investors/icons/withdraw.png" alt="Withdraw Icons">
-                                          </span>
-                                    </div>
-                                    <div class="contents">
-                                        <h6 class="subject-title">Withdraw With USDT TRC20-USDT</h6>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="date">May 08 2026 09:59</span>
-                                            <span class="td-badge badge-warning">
-                                                Success
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="warning-text fs-12 fw-5">
-                                                                            -1650 USD
-                                                                    </span>
-                                <p style="color: #b7d3ff;" class="fs-14 fw-6">Total: 1650 USD</p>
-                            </td>
-                        </tr>
-                                                </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="col-xxl-6 col-xl-6 col-lg-6">
-                <div class="table-container table-responsive has_fade_anim" data-fade-from="right">
-                    <div class="table-heading">
-                        <h4 class="title">Recent Investors</h4>
-                    </div>
-                    <table class="td-table">
-                        <tbody>
-                                                                            <tr>
-                            <td>
-                                <div class="description">
-                                    <div class="icon">
-                                          <span>
-                                             <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/investors/icons/user.png" alt="User Icons">
-                                          </span>
-                                    </div>
-                                    <div class="contents">
-                                        <h6 class="subject-title">Wayne Mukariri</h6>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="date">May 12, 2026 16:31</span>
-                                            <span class="td-badge badge-success">Active</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="success-text fs-12 fw-5">+0 USD</span>
-                                <p style="color: #b7d3ff;" class="fs-14 fw-6">2000 USD</p>
-                            </td>
-                        </tr>
-                                                                            <tr>
-                            <td>
-                                <div class="description">
-                                    <div class="icon">
-                                          <span>
-                                             <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/investors/icons/user.png" alt="User Icons">
-                                          </span>
-                                    </div>
-                                    <div class="contents">
-                                        <h6 class="subject-title">Wayne Mukariri</h6>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="date">May 12, 2026 16:31</span>
-                                            <span class="td-badge badge-success">Active</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="success-text fs-12 fw-5">+0 USD</span>
-                                <p style="color: #b7d3ff;" class="fs-14 fw-6">10000 USD</p>
-                            </td>
-                        </tr>
-                                                                            <tr>
-                            <td>
-                                <div class="description">
-                                    <div class="icon">
-                                          <span>
-                                             <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/investors/icons/user.png" alt="User Icons">
-                                          </span>
-                                    </div>
-                                    <div class="contents">
-                                        <h6 class="subject-title">Wayne Mukariri</h6>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="date">May 12, 2026 16:29</span>
-                                            <span class="td-badge badge-success">Active</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="success-text fs-12 fw-5">+0 USD</span>
-                                <p style="color: #b7d3ff;" class="fs-14 fw-6">4000 USD</p>
-                            </td>
-                        </tr>
-                                                                            <tr>
-                            <td>
-                                <div class="description">
-                                    <div class="icon">
-                                          <span>
-                                             <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/investors/icons/user.png" alt="User Icons">
-                                          </span>
-                                    </div>
-                                    <div class="contents">
-                                        <h6 class="subject-title">Wayne Mukariri</h6>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="date">May 11, 2026 16:24</span>
-                                            <span class="td-badge badge-success">Active</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="success-text fs-12 fw-5">+3000 USD</span>
-                                <p style="color: #b7d3ff;" class="fs-14 fw-6">1000 USD</p>
-                            </td>
-                        </tr>
-                                                                            <tr>
-                            <td>
-                                <div class="description">
-                                    <div class="icon">
-                                          <span>
-                                             <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/investors/icons/user.png" alt="User Icons">
-                                          </span>
-                                    </div>
-                                    <div class="contents">
-                                        <h6 class="subject-title">Wayne Mukariri</h6>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="date">May 11, 2026 16:23</span>
-                                            <span class="td-badge badge-success">Active</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="success-text fs-12 fw-5">+9000 USD</span>
-                                <p style="color: #b7d3ff;" class="fs-14 fw-6">3000 USD</p>
-                            </td>
-                        </tr>
-                                                                            <tr>
-                            <td>
-                                <div class="description">
-                                    <div class="icon">
-                                          <span>
-                                             <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/investors/icons/user.png" alt="User Icons">
-                                          </span>
-                                    </div>
-                                    <div class="contents">
-                                        <h6 class="subject-title">Kipchoge Ochieng</h6>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="date">May 11, 2026 16:17</span>
-                                            <span class="td-badge badge-success">Active</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="success-text fs-12 fw-5">+20 USD</span>
-                                <p style="color: #b7d3ff;" class="fs-14 fw-6">200 USD</p>
-                            </td>
-                        </tr>
-                                                <!-- Add more rows as necessary -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="investors-shapes">
-        <div class="glow">
-            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/investors/glow.png" alt="Investors Glow">
-        </div>
-        <div class="line">
-            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/investors/line.png" alt="Investors Line">
-        </div>
-    </div>
-</section>
-<!-- Investors section end -->                    <!-- Why Choose us section start -->
-<section class="td-why-choose-us-section include-bg fix" data-background="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/bg/why-choose-pattern.png">
-    <div class="container">
-        <div class="row">
-            <div class="col-xxl-4 col-xl-4 col-lg-4 col-md-6 col-12">
-                <div class="section-title-wrapper has_fade_anim">
-                    <span class="section-subtitle">Why Investors Trust Assentro</span>
-                    <h2 class="section-title">Built for Growth, Powered by Trust</h2>
-                </div>
-            </div>
-                        <div class="col-xxl-4 col-xl-4 col-lg-4 col-md-6 col-sm-6">
-                <div class="why-choose-item has_fade_anim">
-                    <div class="icon">
-                              <span>
-                                                                         <i class="fas fa-shield-alt"></i>
-                                                                </span>
-                    </div>
-                    <div class="contents">
-                        <h5 class="title">Top-Notch Security</h5>
-                        <p class="description">Your funds and data are protected by advanced encryption and multi-layered security protocols.</p>
-                    </div>
-                </div>
-            </div>
-                        <div class="col-xxl-4 col-xl-4 col-lg-4 col-md-6 col-sm-6">
-                <div class="why-choose-item has_fade_anim">
-                    <div class="icon">
-                              <span>
-                                                                         <i class="fas fa-chart-line"></i>
-                                                                </span>
-                    </div>
-                    <div class="contents">
-                        <h5 class="title">High Return Potential</h5>
-                        <p class="description">We focus on industries with strong ROI trends—Crypto, Real Estate, Farming, and Oil &amp; Gas.</p>
-                    </div>
-                </div>
-            </div>
-                        <div class="col-xxl-4 col-xl-4 col-lg-4 col-md-6 col-sm-6">
-                <div class="why-choose-item has_fade_anim">
-                    <div class="icon">
-                              <span>
-                                                                         <i class="fas fa-users"></i>
-                                                                </span>
-                    </div>
-                    <div class="contents">
-                        <h5 class="title">Global Community</h5>
-                        <p class="description">Join thousands of investors from around the world building wealth through Assentro.</p>
-                    </div>
-                </div>
-            </div>
-                        <div class="col-xxl-4 col-xl-4 col-lg-4 col-md-6 col-sm-6">
-                <div class="why-choose-item has_fade_anim">
-                    <div class="icon">
-                              <span>
-                                                                         <i class="fas fa-tachometer-alt"></i>
-                                                                </span>
-                    </div>
-                    <div class="contents">
-                        <h5 class="title">Real-Time Monitoring</h5>
-                        <p class="description">Stay in control with real-time dashboards that show exactly how your investment is performing.</p>
-                    </div>
-                </div>
-            </div>
-                        <div class="col-xxl-4 col-xl-4 col-lg-4 col-md-6 col-sm-6">
-                <div class="why-choose-thumb has_fade_anim">
-                    <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/why-choose/why-choose-thumb.png" alt="Why Choose">
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-<!-- Why Choose us section end -->                    <!-- FAQ section start -->
-<section class="td-faq-section p-relative z-index-11">
-    <div class="container">
-        <div class="row gy-30">
-            <div class="col-xxl-5 col-xl-5 col-lg-5">
-                <div class="faq-contents">
-                    <div class="section-title-wrapper">
-                        <span class="section-subtitle">Need Help? We’ve Got Answers</span>
-                        <h2 class="section-title has_fade_anim mb-15">Frequently Asked Questions</h2>
+  );
+}
 
-                    </div>
-                    <div class="faq-thumb has_fade_anim" data-fade-from="bottom" data-delay="0.30">
-                        <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/faq/faq-thumb.png" alt="Faq Thumb">
-                    </div>
-                </div>
-            </div>
-            <div class="col-xxl-7 col-xl-7 col-lg-7">
-                <div class="faq-style-one fix">
-                    <div class="accordion" id="accordionExample">
-                                                    <div class="accordion-item accordion-active has_fade_anim">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button " type="button" data-bs-toggle="collapse" data-bs-target="#collapse0" aria-expanded="true" aria-controls="collapse0">
-                                        <span>
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/faq/icon-04.png" alt="FAQ Icon">
-                                        </span>
-                                        What is Assentro and how does it work?
-                                    </button>
-                                </h2>
-                                <div id="collapse0" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
-                                    <div class="accordion-body">
-                                        <p class="description">Assentro is a global investment platform that allows individuals to invest in Crypto, Real Estate, Agro-Farming, and Oil &amp; Gas. Simply create an account, choose an investment plan, fund your wallet, and watch your profits grow.</p>
-                                    </div>
-                                </div>
-                            </div>
-                                                    <div class="accordion-item  has_fade_anim">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1" aria-expanded="false" aria-controls="collapse1">
-                                        <span>
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/faq/icon-04.png" alt="FAQ Icon">
-                                        </span>
-                                        Is Assentro safe to use?
-                                    </button>
-                                </h2>
-                                <div id="collapse1" class="accordion-collapse collapse " data-bs-parent="#accordionExample">
-                                    <div class="accordion-body">
-                                        <p class="description">Absolutely. We use advanced encryption, secure servers, and multi-factor authentication to protect your data and investments.</p>
-                                    </div>
-                                </div>
-                            </div>
-                                                    <div class="accordion-item  has_fade_anim">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2" aria-expanded="false" aria-controls="collapse2">
-                                        <span>
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/faq/icon-04.png" alt="FAQ Icon">
-                                        </span>
-                                        How do I withdraw my earnings?
-                                    </button>
-                                </h2>
-                                <div id="collapse2" class="accordion-collapse collapse " data-bs-parent="#accordionExample">
-                                    <div class="accordion-body">
-                                        <p class="description">You can request a withdrawal anytime from your dashboard. Withdrawals are processed quickly and securely to your preferred payment method.</p>
-                                    </div>
-                                </div>
-                            </div>
-                                                    <div class="accordion-item  has_fade_anim">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3" aria-expanded="false" aria-controls="collapse3">
-                                        <span>
-                                            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/faq/icon-04.png" alt="FAQ Icon">
-                                        </span>
-                                        Can beginners invest with Assentro?
-                                    </button>
-                                </h2>
-                                <div id="collapse3" class="accordion-collapse collapse " data-bs-parent="#accordionExample">
-                                    <div class="accordion-body">
-                                        <p class="description">Yes! Assentro is designed for everyone—from first-time investors to experienced professionals. Our platform is user-friendly, and we provide support every step of the way.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        
-                    </div>
-                </div>
-            </div>
+function PlaceholderView({ title }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 400, gap: 16 }}>
+      <div style={{ fontSize: 48, opacity: 0.3 }}>◎</div>
+      <h2 style={{ color: COLORS.textSecondary, fontSize: 20, margin: 0 }}>{title}</h2>
+      <p style={{ color: COLORS.textMuted, fontSize: 14, textAlign: "center", maxWidth: 300, margin: 0 }}>
+        This module is part of the full platform. Connect your backend to activate.
+      </p>
+    </div>
+  );
+}
 
-        </div>
-    </div>
-    <div class="faq-glows">
-        <div class="glow-one">
-            <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/faq/faq-glow-01.png" alt="Faq Glow">
-        </div>
-    </div>
-</section>
-<!-- FAQ section end -->                    <!-- Cta section start -->
-<section class="td-cta-section section_space-bottom">
-    <div class="container">
-        <div class="cta-main-wrapper has_fade_anim">
-            <div class="cta-bg">
-                <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/bg/cta-bg.png" alt="">
-            </div>
-            <div class="row gy-3 align-items-center">
-                <div class="col-xxl-8 colxl-8 col-lg-8">
-                    <div class="section-title-wrapper">
-                        <h2 class="section-title has_fade_anim mb-15">Start Growing Your Wealth with Assentro Today</h2>
-                    </div>
-                </div>
-                <div class="col-xxl-3 offset-xxl-1 offset-xl-1 offset-lg-1 colxl-3 col-lg-3 text-left text-lg-end">
-                    <div class="cta-buttons d-inline-flex flex-row flex-lg-column flex-wrap gap-3">
-                        <a class="td-btn gradient-btn radius-8" href="https://assentro.com/register" target="_self">
-                                 <span class="btn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M9.107 5.448C9.705 3.698 12.123 3.645 12.832 5.289L12.892 5.449L13.699 7.809C14.0732 8.90406 14.9033 9.7834 15.975 10.22L16.192 10.301L18.552 11.107C20.302 11.705 20.355 14.123 18.712 14.832L18.552 14.892L16.192 15.699C15.0966 16.0729 14.2168 16.9031 13.78 17.975L13.699 18.191L12.893 20.552C12.295 22.302 9.877 22.355 9.169 20.712L9.107 20.552L8.301 18.192C7.92706 17.0966 7.09692 16.2168 6.025 15.78L5.809 15.699L3.449 14.893C1.698 14.295 1.645 11.877 3.289 11.169L3.449 11.107L5.809 10.301C6.90406 9.92681 7.7834 9.09671 8.22 8.025L8.301 7.809M11 6.094L10.194 8.454C9.62401 10.1245 8.34742 11.4592 6.704 12.103L6.454 12.194L4.094 13L6.454 13.806C8.12445 14.376 9.4592 15.6526 10.103 17.296L10.194 17.546L11 19.906L11.806 17.546C12.376 15.8755 13.6526 14.5408 15.296 13.897L15.546 13.807L17.906 13L15.546 12.194C13.8755 11.624 12.5408 10.3474 11.897 8.704L11.807 8.454M19 2C19.3817 2 19.7301 2.21726 19.898 2.56L19.946 2.677L20.296 3.703L21.323 4.053C21.7064 4.18326 21.9734 4.5319 21.9993 4.93602C22.0251 5.34014 21.8047 5.71995 21.441 5.898L21.323 5.946L20.297 6.296L19.947 7.323C19.8165 7.70631 19.4677 7.9731 19.0636 7.99872C18.6595 8.02435 18.2799 7.80376 18.102 7.44L18.054 7.323L17.704 6.297L16.677 5.947C16.2936 5.81674 16.0266 5.4681 16.0007 5.06398C15.9749 4.65986 16.1953 4.28005 16.559 4.102L16.677 4.054L17.703 3.704L18.053 2.677C18.1912 2.27192 18.572 1.99974 19 2Z" fill="white"></path>
-                                    </svg>
-                                 </span>
-                            <span class="btn-text">Create Your Free Account</span>
-                        </a>
-                        <a class="td-btn btn-fill-border radius-8" href="https://assentro.com/contact" target="_self">
-                                 <span class="btn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M9.107 5.448C9.705 3.698 12.123 3.645 12.832 5.289L12.892 5.449L13.699 7.809C14.0732 8.90406 14.9033 9.7834 15.975 10.22L16.192 10.301L18.552 11.107C20.302 11.705 20.355 14.123 18.712 14.832L18.552 14.892L16.192 15.699C15.0966 16.0729 14.2168 16.9031 13.78 17.975L13.699 18.191L12.893 20.552C12.295 22.302 9.877 22.355 9.169 20.712L9.107 20.552L8.301 18.192C7.92706 17.0966 7.09692 16.2168 6.025 15.78L5.809 15.699L3.449 14.893C1.698 14.295 1.645 11.877 3.289 11.169L3.449 11.107L5.809 10.301C6.90406 9.92681 7.7834 9.09671 8.22 8.025L8.301 7.809M11 6.094L10.194 8.454C9.62401 10.1245 8.34742 11.4592 6.704 12.103L6.454 12.194L4.094 13L6.454 13.806C8.12445 14.376 9.4592 15.6526 10.103 17.296L10.194 17.546L11 19.906L11.806 17.546C12.376 15.8755 13.6526 14.5408 15.296 13.897L15.546 13.807L17.906 13L15.546 12.194C13.8755 11.624 12.5408 10.3474 11.897 8.704L11.807 8.454M19 2C19.3817 2 19.7301 2.21726 19.898 2.56L19.946 2.677L20.296 3.703L21.323 4.053C21.7064 4.18326 21.9734 4.5319 21.9993 4.93602C22.0251 5.34014 21.8047 5.71995 21.441 5.898L21.323 5.946L20.297 6.296L19.947 7.323C19.8165 7.70631 19.4677 7.9731 19.0636 7.99872C18.6595 8.02435 18.2799 7.80376 18.102 7.44L18.054 7.323L17.704 6.297L16.677 5.947C16.2936 5.81674 16.0266 5.4681 16.0007 5.06398C15.9749 4.65986 16.1953 4.28005 16.559 4.102L16.677 4.054L17.703 3.704L18.053 2.677C18.1912 2.27192 18.572 1.99974 19 2Z" fill="white"></path>
-                                    </svg>
-                                 </span>
-                            <span class="btn-text">View Investment Plans</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-<!-- Cta section end -->                    <!-- Blog area start -->
-<div class="td-blog-area position-relative z-index-11 section_space fix">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-xxl-5 col-xl-6 col-lg-8">
-                <div class="section-title-wrapper text-center section_title_space">
-                    <span class="section-subtitle">Insights &amp; Updates</span>
-                    <h2 class="section-title has_fade_anim mb-15">Explore the Latest in Investment Trends, Tips, and News</h2>
-                </div>
-            </div>
-        </div>
-        <div class="row gy-20">
-                        <div class="col-xxl-4 col-xl-4 col-lg-4 col-md-6">
-                <div class="has_fade_anim" data-fade-from="bottom" data-delay="0.30">
-                    <article class="single-blog-item">
-                        <div class="blog-thumb-box">
-                            <div class="blog-thumb">
-                                <a href="https://assentro.com/blog/3">
-                                    <img src="https://assentro.com/assets/global/images/0lCzODmalVUZTSPyN8DL.jpg" alt="blog img not found">
-                                </a>
-                            </div>
-                            <div class="blog-date">
-                                <span>31 July 2023</span>
-                            </div>
-                        </div>
-                        <div class="blog-contents">
-                            <h5 class="title">
-                                <a href="https://assentro.com/blog/3">Hyiprio allows to Invest jointly all the way</a>
-                            </h5>
-                            <p class="description"><p>Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of cla...</p>
-                            <div class="blog-link">
-                                <a class="btn-text" href="https://assentro.com/blog/3">Continue Reading</a>
-                            </div>
-                        </div>
-                    </article>
-                </div>
-            </div>
-                        <div class="col-xxl-4 col-xl-4 col-lg-4 col-md-6">
-                <div class="has_fade_anim" data-fade-from="bottom" data-delay="0.30">
-                    <article class="single-blog-item">
-                        <div class="blog-thumb-box">
-                            <div class="blog-thumb">
-                                <a href="https://assentro.com/blog/2">
-                                    <img src="https://assentro.com/assets/global/images/pjcE6TesJb31usofdzQd.jpg" alt="blog img not found">
-                                </a>
-                            </div>
-                            <div class="blog-date">
-                                <span>31 July 2023</span>
-                            </div>
-                        </div>
-                        <div class="blog-contents">
-                            <h5 class="title">
-                                <a href="https://assentro.com/blog/2">The platform works headless</a>
-                            </h5>
-                            <p class="description"><p>Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of cla...</p>
-                            <div class="blog-link">
-                                <a class="btn-text" href="https://assentro.com/blog/2">Continue Reading</a>
-                            </div>
-                        </div>
-                    </article>
-                </div>
-            </div>
-                        <div class="col-xxl-4 col-xl-4 col-lg-4 col-md-6">
-                <div class="has_fade_anim" data-fade-from="bottom" data-delay="0.30">
-                    <article class="single-blog-item">
-                        <div class="blog-thumb-box">
-                            <div class="blog-thumb">
-                                <a href="https://assentro.com/blog/1">
-                                    <img src="https://assentro.com/assets/global/images/aSoWnFlPlnnJBXq4hQXi.jpg" alt="blog img not found">
-                                </a>
-                            </div>
-                            <div class="blog-date">
-                                <span>31 July 2023</span>
-                            </div>
-                        </div>
-                        <div class="blog-contents">
-                            <h5 class="title">
-                                <a href="https://assentro.com/blog/1">Yearly Best Investment authority here</a>
-                            </h5>
-                            <p class="description"><p>Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of cla...</p>
-                            <div class="blog-link">
-                                <a class="btn-text" href="https://assentro.com/blog/1">Continue Reading</a>
-                            </div>
-                        </div>
-                    </article>
-                </div>
-            </div>
-                    </div>
-    </div>
-    <div class="blog-shapes d-none d-sm-block">
-        <span class="shape-one"></span>
-        <span class="shape-two"></span>
-    </div>
-</div>
-<!-- Blog area end -->                        
-                </main>
-            </div>
-        </div>
-    </div>
+// ──────────────── MAIN APP ────────────────
+export default function App() {
+  const [activeNav, setActiveNav] = useState("dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [notifs, setNotifs] = useState(3);
 
-    <!--Footer Area-->
-    <!-- Footer area start -->
-<footer>
-    <div class="td-footer-section footer-primary p-relative z-index-11">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-xxl-6 col-xl-6 col-lg-8 col-md-10">
-                    <div class="footer-content text-center has_fade_anim">
-                        <div class="footer-logo">
-                            <a href="https://assentro.com">
-                                <img src="https://assentro.com/assets/global/images/UFX7xJo83RdsgSq13daQ.png" alt="Footer logo">
-                            </a>
-                        </div>
-                        <p class="description"> Assentro is a global investment platform offering smart, secure opportunities in Crypto, Real Estate, Agro-Farming, and Oil &amp; Gas. Join thousands of investors building a better financial future.</p>
-                    </div>
-                </div>
-            </div>
-                        <div class="footer-main-wrapper has_fade_anim">
-                <div class="row gy-50">
-                                        <div class="col-xxl-3 col-xl-3 col-lg-3 col-md-6 col-sm-6">
-                        <div class="footer-wg-head">
-                            <h5 class="title">Base Navigation</h5>
-                        </div>
-                        <div class="footer-links">
-                            <ul>
-                                                                                                        <li><a href="https://assentro.com">Home</a></li>
-                                                                                                                                            <li><a href="https://assentro.com/login">Account Login</a></li>
-                                                                                                                                            <li><a href="https://assentro.com/blog">Blog</a></li>
-                                                                                                                                            <li><a href="https://assentro.com/contact">Contact</a></li>
-                                                                                                                                            <li><a href="https://assentro.com/privacy-policy">Privacy</a></li>
-                                                                                                                                            <li><a href="https://assentro.com/schema">Investment Plans</a></li>
-                                                                                                </ul>
-                        </div>
-                    </div>
-                                        <div class="col-xxl-3 col-xl-3 col-lg-3 col-md-6 col-sm-6">
-                        <div class="footer-wg-head">
-                            <h5 class="title">Important Links</h5>
-                        </div>
-                        <div class="footer-links">
-                            <ul>
-                                                                                                        <li><a href="https://assentro.com/faq">FAQ</a></li>
-                                                                                                                                            <li><a href="https://assentro.com/about-us">About</a></li>
-                                                                                                                                            <li><a href="https://assentro.com/terms-and-conditions">Terms and Conditions</a></li>
-                                                                                                                                            <li><a href="https://assentro.com/rankings">Ranking</a></li>
-                                                                                                </ul>
-                        </div>
-                    </div>
-                                        <div class="col-xxl-6 col-xl-6 col-lg-6">
-                        <div class="footer-widget">
-                            <div class="footer-subscribe">
-                                <div class="footer-wg-head">
-                                    <h5 class="title">Newsletter</h5>
-                                </div>
-                            </div>
-                            <div class="footer-input">
-                                <form action="https://assentro.com/subscriber" method="POST">
-                                    <input type="hidden" name="_token" value="5lhqrvCwWzlSH32G68Utf0r4kD6HROgC6j4wziez">                                    <input type="email" name="email" id="footerName" placeholder="Enter your email address">
-                                    <button type="submit" class="td-btn gradient-btn">
-                                        <span class="btn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                           <path d="M9.107 5.448C9.705 3.698 12.123 3.645 12.832 5.289L12.892 5.449L13.699 7.809C14.0732 8.90406 14.9033 9.7834 15.975 10.22L16.192 10.301L18.552 11.107C20.302 11.705 20.355 14.123 18.712 14.832L18.552 14.892L16.192 15.699C15.0966 16.0729 14.2168 16.9031 13.78 17.975L13.699 18.191L12.893 20.552C12.295 22.302 9.877 22.355 9.169 20.712L9.107 20.552L8.301 18.192C7.92706 17.0966 7.09692 16.2168 6.025 15.78L5.809 15.699L3.449 14.893C1.698 14.295 1.645 11.877 3.289 11.169L3.449 11.107L5.809 10.301C6.90406 9.92681 7.7834 9.09671 8.22 8.025L8.301 7.809M11 6.094L10.194 8.454C9.62401 10.1245 8.34742 11.4592 6.704 12.103L6.454 12.194L4.094 13L6.454 13.806C8.12445 14.376 9.4592 15.6526 10.103 17.296L10.194 17.546L11 19.906L11.806 17.546C12.376 15.8755 13.6526 14.5408 15.296 13.897L15.546 13.807L17.906 13L15.546 12.194C13.8755 11.624 12.5408 10.3474 11.897 8.704L11.807 8.454M19 2C19.3817 2 19.7301 2.21726 19.898 2.56L19.946 2.677L20.296 3.703L21.323 4.053C21.7064 4.18326 21.9734 4.5319 21.9993 4.93602C22.0251 5.34014 21.8047 5.71995 21.441 5.898L21.323 5.946L20.297 6.296L19.947 7.323C19.8165 7.70631 19.4677 7.9731 19.0636 7.99872C18.6595 8.02435 18.2799 7.80376 18.102 7.44L18.054 7.323L17.704 6.297L16.677 5.947C16.2936 5.81674 16.0266 5.4681 16.0007 5.06398C15.9749 4.65986 16.1953 4.28005 16.559 4.102L16.677 4.054L17.703 3.704L18.053 2.677C18.1912 2.27192 18.572 1.99974 19 2Z" fill="white"/>
-                                           </svg>
-                                        </span>
-                                        <span class="btn-text">Subscribe</span>
-                                    </button>
-                                </form>
-                            </div>
-                            <div class="footer-socials">
-                                                                <a href="https://www.facebook.com">
-                                    <i class="fab fa-facebook-f"></i>
-                                </a>
-                                                                <a href="https://www.instagram.com/">
-                                    <i class="fab fa-instagram"></i>
-                                </a>
-                                                                <a href="https://youtube.com">
-                                    <i class="fab fa-youtube"></i>
-                                </a>
-                                                                <a href="https://telegram.com">
-                                    <i class="fab fa-telegram"></i>
-                                </a>
-                                                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="footer-copyright">
-                <div class="copyright-text text-center">
-                    <p class="description">© 2025 Assentro. All rights reserved.</p>
-                </div>
-            </div>
-        </div>
-        <div class="footer-glows">
-            <div class="glow-one">
-                <img src="https://assentro.com/assets/frontend/theme_base/coin_orbit/images/footer/footer-glow-01.png" alt="Footer Glow">
-            </div>
-        </div>
-    </div>
-</footer>
-<!-- Footer area end -->
-    <!--Footer Area End-->
-
-    
-    <!-- JS here -->
-<script src="https://assentro.com/assets/frontend/theme_base/coin_orbit/js/jquery-3.7.1.min.js"></script>
-<script src="https://assentro.com/assets/frontend/theme_base/coin_orbit/js/bootstrap.bundle.min.js"></script>
-<script src="https://assentro.com/assets/frontend/theme_base/coin_orbit/js/cookie.js"></script>
-<script src="https://assentro.com/assets/frontend/theme_base/coin_orbit/js/magnific-popup.min.js"></script>
-<script src="https://assentro.com/assets/frontend/theme_base/coin_orbit/js/odometer.min.js"></script>
-<script src="https://assentro.com/assets/frontend/theme_base/coin_orbit/js/jquery.appear.min.js"></script>
-<script src="https://assentro.com/assets/frontend/theme_base/coin_orbit/js/select2.js"></script>
-<script src="https://assentro.com/assets/frontend/theme_base/coin_orbit/js/swiper.min.js"></script>
-
-<!-- Gsap script -->
-<script src="https://assentro.com/assets/frontend/theme_base/coin_orbit/js/gsap/gsap.min.js"></script>
-<script src="https://assentro.com/assets/frontend/theme_base/coin_orbit/js/gsap/ScrollSmoother.min.js"></script>
-<script src="https://assentro.com/assets/frontend/theme_base/coin_orbit/js/gsap/ScrollToPlugin.min.js"></script>
-<script src="https://assentro.com/assets/frontend/theme_base/coin_orbit/js/gsap/ScrollTrigger.min.js"></script>
-<script src="https://assentro.com/assets/frontend/theme_base/coin_orbit/js/gsap/SplitText.min.js"></script>
-
-<script src="https://assentro.com/assets/frontend/theme_base/coin_orbit/js/main.js"></script>
-<script src="https://assentro.com/assets/frontend/theme_base/coin_orbit/js/error-handling.js"></script>
-<script>
-    // accordion-item active
-    $(document).on('click', '.accordion-item', function () {
-        $('.accordion-item').removeClass('accordion-active'); // Remove active class from all
-        $(this).addClass('accordion-active'); // Add active class to the clicked item
-    });
-</script>
-<script>
-    function reviewSliderActive($scope, $) {
-        $scope.find('.payment_gateways_active .swiper-container').each(function () {
-            let SwiperBottom = new Swiper(this, {
-                spaceBetween: $(this).data('space-between'),
-                centeredSlides: true,
-                slidesPerView: $(this).data('slides'),
-                speed: 6000,
-                autoplay: {
-                    delay: 1,
-                },
-                loop: true,
-                allowTouchMove: false,
-                disableOnInteraction: true,
-                breakpoints: {
-                    0: {
-                        slidesPerView: 2,
-                    },
-                    480: {
-                        slidesPerView: 3,
-                    },
-                    575: {
-                        slidesPerView: 3,
-                    },
-                    787: {
-                        slidesPerView: 3,
-                    },
-                    991: {
-                        slidesPerView: 4,
-                    },
-                    1200: {
-                        slidesPerView: 4,
-                    },
-                    1400: {
-                        slidesPerView: 5,
-                    },
-                    1921: {
-                        slidesPerView: 7,
-                    }
-                }
-            });
-        });
+  const renderView = () => {
+    switch (activeNav) {
+      case "dashboard": return <DashboardView />;
+      case "transactions": return <TransactionsView />;
+      case "users": return <UsersView />;
+      case "whatsapp": return <WhatsAppView />;
+      case "analytics": return <AnalyticsView />;
+      case "security": return <SecurityView />;
+      default: return <PlaceholderView title={navItems.find(n => n.id === activeNav)?.label} />;
     }
-    $(document).ready(function () {
-        reviewSliderActive($(document), jQuery);
-    });
-</script>
+  };
 
+  return (
+    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.bg, fontFamily: "'DM Mono', 'Fira Code', monospace", color: COLORS.textPrimary }}>
+      <style>{`
+        * { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: ${COLORS.border}; border-radius: 2px; }
+        @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes slideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        input::placeholder { color: ${COLORS.textMuted}; }
+        input:focus { border-color: ${COLORS.accent} !important; box-shadow: 0 0 0 3px ${COLORS.accentGlow}; }
+      `}</style>
 
+      {/* Sidebar */}
+      <div style={{
+        width: sidebarOpen ? 220 : 60, background: COLORS.surface,
+        borderRight: `1px solid ${COLORS.border}`, display: "flex", flexDirection: "column",
+        transition: "width 0.3s ease", overflow: "hidden", flexShrink: 0, position: "sticky", top: 0, height: "100vh",
+      }}>
+        {/* Logo */}
+        <div style={{ padding: "20px 16px", borderBottom: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: `linear-gradient(135deg, ${COLORS.accent}, ${COLORS.blue})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>₿</div>
+          {sidebarOpen && (
+            <div>
+              <div style={{ color: COLORS.textPrimary, fontSize: 14, fontWeight: 800, letterSpacing: "-0.5px" }}>PesaPay</div>
+              <div style={{ color: COLORS.textMuted, fontSize: 9, letterSpacing: "0.15em" }}>FINTECH PLATFORM</div>
+            </div>
+          )}
+        </div>
 
-<script>
-    (function($) {
-        'use strict';
-        // MagnificPopup image
-        $(".popup-image").magnificPopup({
-            type: "image",
-            gallery: {
-                enabled: true,
-            },
-        });
+        {/* Nav */}
+        <nav style={{ flex: 1, padding: "12px 8px", overflowY: "auto" }}>
+          {navItems.map(item => (
+            <button key={item.id} onClick={() => setActiveNav(item.id)} style={{
+              width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 10px",
+              borderRadius: 8, border: "none", cursor: "pointer", marginBottom: 2,
+              background: activeNav === item.id ? `${COLORS.accent}15` : "transparent",
+              color: activeNav === item.id ? COLORS.accent : COLORS.textSecondary,
+              transition: "all 0.15s",
+              textAlign: "left",
+            }}>
+              <span style={{ fontSize: 16, flexShrink: 0, width: 20, textAlign: "center" }}>{item.icon}</span>
+              {sidebarOpen && <span style={{ fontSize: 12, fontWeight: activeNav === item.id ? 700 : 500, whiteSpace: "nowrap" }}>{item.label}</span>}
+              {sidebarOpen && activeNav === item.id && <div style={{ marginLeft: "auto", width: 4, height: 4, borderRadius: "50%", background: COLORS.accent }} />}
+            </button>
+          ))}
+        </nav>
 
-        // MagnificPopup video
-        $(".popup-video").magnificPopup({
-            type: "iframe",
-        });
-    })(jQuery);
-</script>
+        {/* Sidebar Footer */}
+        {sidebarOpen && (
+          <div style={{ padding: 16, borderTop: `1px solid ${COLORS.border}` }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Avatar initials="AD" size={28} />
+              <div>
+                <div style={{ color: COLORS.textPrimary, fontSize: 12, fontWeight: 700 }}>Admin</div>
+                <div style={{ color: COLORS.textMuted, fontSize: 10 }}>Super Admin</div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
+      {/* Main Content */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+        {/* Topbar */}
+        <div style={{
+          height: 60, background: COLORS.surface, borderBottom: `1px solid ${COLORS.border}`,
+          display: "flex", alignItems: "center", padding: "0 24px", gap: 16, position: "sticky", top: 0, zIndex: 10,
+        }}>
+          <button onClick={() => setSidebarOpen(o => !o)} style={{ background: "none", border: `1px solid ${COLORS.border}`, borderRadius: 6, padding: "4px 8px", color: COLORS.textSecondary, cursor: "pointer", fontSize: 14 }}>
+            {sidebarOpen ? "◁" : "▷"}
+          </button>
+          <div style={{ flex: 1 }}>
+            <input placeholder="Search users, transactions, merchants..." style={{
+              background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 8,
+              padding: "7px 14px", color: COLORS.textPrimary, fontSize: 12, width: "min(400px, 100%)", outline: "none",
+            }} />
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ padding: "5px 12px", background: `${COLORS.whatsapp}15`, border: `1px solid ${COLORS.whatsapp}33`, borderRadius: 6, display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: COLORS.whatsapp, animation: "pulse 2s infinite" }} />
+              <span style={{ color: COLORS.whatsapp, fontSize: 11, fontWeight: 600 }}>WhatsApp Live</span>
+            </div>
+            <div style={{ position: "relative", cursor: "pointer" }}>
+              <span style={{ fontSize: 18, color: COLORS.textSecondary }}>🔔</span>
+              {notifs > 0 && <span onClick={() => setNotifs(0)} style={{ position: "absolute", top: -4, right: -4, width: 16, height: 16, borderRadius: "50%", background: COLORS.red, color: "#fff", fontSize: 9, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>{notifs}</span>}
+            </div>
+          </div>
+        </div>
 
-<script type="text/javascript" src="https://assentro.com/assets/vendor/mckenziearts/laravel-notify/js/notify.js"></script>
-    <script>
-        $('#select2Icons').on('change', function(e) {
-            e.preventDefault();
-
-            var id = $(this).val();
-
-            if (id != 0) {
-                var invest_amount = $("#enter-amount");
-                invest_amount.val('');
-                invest_amount.attr('readonly', false);
-
-                var url = 'https://assentro.com/schema-select/:id';
-
-                url = url.replace(':id', id);
-
-                $.ajax({
-                    url: url,
-                    success: function(result) {
-                        $('#amount-level').html('Capital Back: ' + result.capital_back);
-                        $('#profit-label').html(result.return_interest + ' - ' + result.number_period);
-
-                        if (result.invest_amount > 0) {
-                            invest_amount.val(result.invest_amount);
-                            invest_amount.attr('readonly', true);
-                        }
-
-                        calculateProfit(result);
-                    }
-                });
-            }
-        });
-
-        $('#enter-amount').on('keyup', function(e) {
-            e.preventDefault();
-            var id = $('#select2Icons').val();
-
-            if (id != 0) {
-                var url = 'https://assentro.com/schema-select/:id';
-                url = url.replace(':id', id);
-
-                $.ajax({
-                    url: url,
-                    success: function(result) {
-                        calculateProfit(result);
-                    }
-                });
-            }
-        });
-
-        function calculateProfit(result) {
-            console.log(result.roi_interest_type);
-            var invest_amount = $("#enter-amount").val();
-
-            if (result.number_period === 'Unlimited Times') {
-                $('#profit').val('Unlimited');
-            } else {
-                if (result.interest_type === 'range') {
-                    if (result.roi_interest_type === 'percentage') {
-                        $('#profit').val(result.min_roi + '%' + ' - ' + result.max_roi + '%');
-                    } else {
-                        $('#profit').val('$' + result.min_roi + ' - $' + result.max_roi);
-                    }
-                } else {
-                    $('#profit').val(calPercentage(invest_amount, result.interest) * result.period);
-                }
-            }
-        }
-
-        function calPercentage(amount, percentage) {
-            return (amount * percentage) / 100;
-        }
-    </script>
-
-
-
-</body>
-
-</html>
+        {/* Page Content */}
+        <div style={{ flex: 1, padding: 24, overflowY: "auto", animation: "slideIn 0.2s ease" }}>
+          {renderView()}
+        </div>
+      </div>
+    </div>
+  );
+}
