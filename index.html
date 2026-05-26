@@ -459,7 +459,6 @@
         setInput("");
         setLoading(true);
 
-        // Simulated AI Bot logic for direct browser/GitHub pages rendering safely
         setTimeout(() => {
           let replyText = "🤖 I'm processing your request. Please type *menu* to see available commands.";
           const formattedInput = currentInput.toLowerCase().trim();
@@ -807,7 +806,7 @@
       );
     }
 
-    const root = docComponent = ReactDOM.createRoot(document.getElementById('root'));
+    const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<App />);
   </script>
 </body>
